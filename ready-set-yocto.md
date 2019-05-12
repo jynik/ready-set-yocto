@@ -124,7 +124,7 @@ will be created and initialized if it doesn't exist. Lets start a new build
 directory called "rpi0":
 
 ~~~
- $ source /portable/yocto/sumo/poki/oe-init-build-env /portable/yocto/sumo/builds/rpi0
+ $ source /portable/yocto/sumo/poky/oe-init-build-env /portable/yocto/sumo/builds/rpi0
 ~~~
 
 You should see some text welcoming you into the environment. You will be placed
