@@ -1,0 +1,596 @@
+<h1 id="ready-set-yocto">Ready, Set, Yocto!</h1>
+
+<p><strong><em>A short, unofficial guide on getting started with Yocto Release 3.0 (“Zeus”) with a Raspberry Pi</em></strong></p>
+
+<p><strong>Release</strong>: 3.0 “Zeus”</p>
+
+<p><strong>Author</strong>: Jon Szymaniak (<a href="https://github.com/jynik">jynik</a> / <a href="https://twitter.com/sz_jynik">@sz_jynik</a>)</p>
+
+<p><strong>License</strong>: <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC BY-SA 2.0</a></p>
+
+<p><em>Please report bugs, typos, feedback, and violations of best practice on <a href="https://github.com/jynik/ready-set-yocto/issues">the issue tracker</a>.</em></p>
+
+<h1 id="introduction">Introduction</h1>
+
+<p>If you’re looking to build Linux-based firmware for embedded platforms, Yocto
+is a good option for you.</p>
+
+<p>If you’re looking to create reproducible and version-controlled automated 
+firmware builds with excellent traceability, change tracking, license auditing,
+configurable QA tests, and support for tons of software… Yocto is a great option for you!</p>
+
+<p>So what is Yocto exactly? It’s a bit of an umbrella project that pulls together
+multiple components, including the <a href="https://www.openembedded.org/wiki/Main_Page">OpenEmbedded</a> build system, to allow you to
+create custom-tailored embedded Linux “distributions” for your specific needs.</p>
+
+<p>The purpose of this guide is to get you up and running with a minimal build for
+a Raspberry Pi so that you can dive into the documentation while you wait.</p>
+
+<p>Keep the following at an arm’s length. In particular, the “Mega-Manual” is fantastic
+to search through (e.g. via “Ctrl-F”) any time you encounter a term or variable
+name that you are unfamiliar with.</p>
+
+<ul>
+  <li><a href="https://www.yoctoproject.org/docs/latest/yocto-project-qs/yocto-project-qs.html">Yocto Quick Start Guide</a></li>
+  <li><a href="https://www.yoctoproject.org/docs/3.0/bitbake-user-manual/bitbake-user-manual.html">Bitbake User Manual</a></li>
+  <li><a href="https://www.yoctoproject.org/docs/3.0/mega-manual/mega-manual.html">Yocto Mega-Manual</a></li>
+</ul>
+
+<h2 id="shameless-plug">Shameless Plug</h2>
+
+<p>The follow white paper, written by yours truly, may also be
+of interest to you once you start to get your bearings. I hope to update this
+for the Zeus (or a later) release in the near future, so feedback on that is
+always welcome.</p>
+
+<p><a href="https://www.nccgroup.trust/us/our-research/improving-your-embedded-linux-security-posture-with-yocto/">Improving Your Embedded Linux Security Posture with Yocto</a></p>
+
+<h2 id="dont-panic">Don’t Panic!</h2>
+
+<p>Finally - please understand that there is a non-trivial learning curve with the
+Yocto and OpenEmbedded projects. Don’t be discouraged, and reach out if you need help.
+Both projects have mailing lists, as well as a presence on sites like Stack Exchange.
+I generally will try to provide advice if folks reach out to me directly, time
+and general life situation permitting.</p>
+
+<p>If you ultimately find that you’re having a lot of trouble or just don’t like something
+about Yocto/OpenEmbedded, consider kicking the tires on BuildRoot. You can find
+comparisons of all three projects <a href="https://www.yoctoproject.org/learn-items/elc-2016-buildroot-vs-yocto-projectopenembedded-alexandre-belloni/">here</a>.</p>
+
+<h1 id="build-environment">Build Environment</h1>
+
+<p>The nature and configuration of your build machine(s) will vary depending your
+needs. This guide DOES NOT cover a configuration suitable for production build
+deployments. Instead, this covers a “personal dev setup” installed onto a 
+portable SSD that can be moved from machine to machine.</p>
+
+<p>My (minimum) recommended setup is:</p>
+
+<ul>
+  <li>
+    <table>
+      <tbody>
+        <tr>
+          <td>(X</td>
+          <td>K)Ubuntu 18.04 LTS (or some similarly recent-ish distro of your choice)</td>
+        </tr>
+      </tbody>
+    </table>
+  </li>
+  <li>At least 8 GiB of RAM</li>
+  <li>At least an Intel i5 (or AMD equivalent)</li>
+  <li>At least 200 GiB of disk space, preferably on an SSD</li>
+</ul>
+
+<p>To enable me to move from machine to machine (e.g., desktop to laptop) 
+with my build environment, I use a portable SSD with the following restrictions,</p>
+
+<ul>
+  <li>The SSD is formatted with EXT4</li>
+  <li>All machines mount the SSD to the same exact mountpoint, i.e. <code>/portable</code></li>
+  <li>The User and Group IDs I use between machines match. If you can’t guarantee
+  this with already existing users, consider making a new uid and gid for
+  your builds.</li>
+</ul>
+
+<p>If you decide to use a removable volume that’s shared between multiple machines
+and deviate from those restrictions, you’ll probably run into problems.</p>
+
+<h1 id="dependencies">Dependencies</h1>
+
+<p>You’ll need to install some tools to get started. For the apt users out there…</p>
+
+<pre><code> $ sudo apt install build-essential chrpath gawk git texinfo
+</code></pre>
+
+<h1 id="build-system-and-required-layers">Build System and Required Layers</h1>
+
+<p>So, let’s assume the portable SSD I’m working with is always mounted to a
+<code>/portable</code> mountpoint.</p>
+
+<p>Oftentimes I’ll keep multiple Yocto releases on my system, so let’s create 
+a directory for the current version:</p>
+
+<pre><code> $ mkdir -p /portable/yocto/zeus
+ $ cd /portable/yocto/zeus
+</code></pre>
+
+<p>Let’s also make some directories we’ll use later:</p>
+
+<pre><code> $ mkdir /portable/yocto/zeus/builds
+ $ mkdir /portable/yocto/zeus/downloads
+</code></pre>
+
+<p>Now lets check out the zeus branch of “Poky” - Yocto’s Build system:</p>
+
+<pre><code> $ git clone -b zeus git://git.yoctoproject.org/poky.git
+</code></pre>
+
+<p>The bitbake tool used by Yocto parses “recipes” that describe how to fetch,
+patch, configure, compile, install, and package software. Collections of related
+“recipes” are grouped into “layers” and their names are typically prefixed 
+with “<em>meta-“</em>.</p>
+
+<p>There’s a layer dedicated to Raspberry Pi support. Let’s fetch that. Note that
+we’re still in <code>/portable/yocto/zeus</code> still!</p>
+
+<pre><code> $ git clone -b zeus https://github.com/agherzan/meta-raspberrypi.git
+</code></pre>
+
+<p>If you take a look at <code>meta-raspberrypi/README.md</code>, you’ll note that it has
+dependencies on <em>meta-oe</em>, <em>meta-multimedia</em>, <em>meta-networking</em>, and <em>meta-python</em>.
+Fortunately, these are all in one repo:</p>
+
+<pre><code> $ git clone -b zeus git://git.openembedded.org/meta-openembedded
+</code></pre>
+
+<h1 id="enter-your-build-environment">Enter Your Build Environment</h1>
+
+<p>Any time you want to work with the Yocto build system, you’ll need your
+environment to be in the proper state. A provided script sets everything up for
+you.</p>
+
+<p>The argument to this script is the build directory you want to work out of. This
+will be created and initialized if it doesn’t exist. Lets start a new build
+directory called “rpi”:</p>
+
+<pre><code> $ source /portable/yocto/zeus/poky/oe-init-build-env /portable/yocto/zeus/builds/rpi
+</code></pre>
+
+<p>You should see some text welcoming you into the environment. You will be placed
+into the <em>rpi</em> directory that was just created.</p>
+
+<p>There are two files to configure in this directory:</p>
+
+<ul>
+  <li><code>conf/local.conf</code> - Build variables and options</li>
+  <li><code>conf/bblayers.conf</code> - Points the build environment to the layers you want to use</li>
+</ul>
+
+<h1 id="edit-conflocalconf">Edit conf/local.conf</h1>
+
+<p>Open up <code>conf/local.conf</code> in your favorite editor and find this line:</p>
+
+<pre><code>MACHINE ??= "qemux86"
+</code></pre>
+
+<p>This denotes which platform we’re targeting. This string corresponds
+to <code>&lt;MACHINE&gt;.conf</code> files traditionally stored in the <code>conf/machine/</code> directories
+provided by various “layers”.</p>
+
+<h2 id="a-quick-aside-regarding-machine">A quick aside regarding MACHINE…</h2>
+
+<p>Take a look through the contents of the <code>meta-raspberrypi/machine/</code> directory. Observe
+that there’s a <code>.conf</code> file for each revision of the Raspberry Pi, and in some cases,
+different variants of the same revision.</p>
+
+<p>For instance, there’s a “<code>raspberrypi0</code>” and
+a “<code>raspberrypi0-wifi</code>” – the former is the variant without built-in Wi-Fi, and the
+later targets the variant with is. The “<code>raspberrypi4-64</code>” configuration operates
+the RPi 4 in its 64-bit mode, while the “<code>raspberrypi4</code>” machine configuration
+operates it in 32-bit mode.</p>
+
+<p>If you look at the content in these machine configuration files, you’ll find that
+there’s not a whole lot in there. This is because a majority of the “common stuff”
+is all tucked away in files that are included (<em>think #include in C/C++</em>) via the
+<a href="https://www.yoctoproject.org/docs/3.0/bitbake-user-manual/bitbake-user-manual.html#include-directive"><code>include</code></a> and <a href="https://www.yoctoproject.org/docs/3.0/bitbake-user-manual/bitbake-user-manual.html#require-inclusion"><code>required</code></a> directives.</p>
+
+<p>Thus, the machine configuration files only override or expand upon variable definitions as-needed to do things like…</p>
+
+<ul>
+  <li>Specify the U-Boot or Linux kernel target platform name</li>
+  <li>Append extra items to a list of recommended firmware (e.g., Wi-Fi, BlueTooth module) recipes</li>
+  <li>Tweak kernel command line arguments (e.g. serial console)</li>
+</ul>
+
+<h2 id="back-to-localconf">Back to local.conf</h2>
+
+<p>So now that we know a little bit more about what the “<code>MACHINE</code>” variable does,
+select the one that fits that platform that you’d like to build an image for.</p>
+
+<p>As an example, let’s target the Raspberry Pi 3 in 32-bit mode… just because we can.
+This is done by changing the <code>MACHINE</code> definition in <code>local.conf</code> to:</p>
+
+<pre><code>MACHINE = "raspberrypi3"
+</code></pre>
+
+<p>Next, change the <code>DL_DIR</code> variable to point to a location where we should
+store downloaded files. I recommend setting this to something like…</p>
+
+<pre><code>DL_DIR = "/portable/yocto/zeus/downloads"
+</code></pre>
+
+<p>This variable specifies where we want to store downloaded files. For my own
+sanity, I generally have separate per-platform build directories. However, to
+save some time, I share the downloads between those builds so that I don’t have
+to re-download items I already have. This is purely a matter of preference.</p>
+
+<h2 id="raspberry-pi-specific-configurations">Raspberry Pi-Specific Configurations</h2>
+
+<p>Before we’re done editing the <code>local.conf</code> file, take a quick skim through the
+<code>meta-raspberrypi</code> layer’s <a href="https://git.yoctoproject.org/cgit/cgit.cgi/meta-raspberrypi/tree/docs/extra-build-config.md?h=zeus"><code>docs/extra-build-config.md</code></a> file.</p>
+
+<p>This describes a variety of <code>local.conf</code> definitions that you can use to
+enable/disable/modify what ultimately gets written to the <code>config.txt</code> file
+stored in the image’s boot volume, which used to <a href="https://www.raspberrypi.org/documentation/configuration/config-txt/README.md">configure the Raspberry Pi at
+runtime</a>.</p>
+
+<p>Frankly, the Raspberry Pi is bit weird and atypical in this regard; this type
+of configuration deviates a bit from the spirit of Yocto/OpenEmbedded, which I
+suspect stems from the fact that it’s a designed to be a platform for people
+modify, customize, and hack on – this differs from a product designed to implement
+only a very specific set of requirements, which is what the build system is
+intended for.</p>
+
+<p>If you plan on distributing your custom firmware build setup to other people
+(or are responsible for maintaining the firmware build process for your
+product), avoid heavy use of local.conf tweaks. Instead use custom layers, custom
+machine configuration files, and  “bbappend” files – we’ll learn about those more a bit later.</p>
+
+<p>For now, just roll with this, and know there’s a “better” approach for builds
+that aren’t just one-off experiments.</p>
+
+<p>For the Raspberry Pi, below two settings you’ll want to consider enabling, via
+the documented additions to your <code>local.conf</code>. Note that there’s a few more
+you may be interested in if you’re planning to use I2C and SPI interfaces.</p>
+
+<ul>
+  <li><code>ENABLE_UART = "1"</code>    - If you’d like to access a shell via the UART</li>
+  <li><code>RPI_USE_U_BOOT = "1"</code> - If you’d like to use the U-Boot bootloader</li>
+</ul>
+
+<h1 id="edit-confbblayersconf">Edit conf/bblayers.conf</h1>
+
+<p>So far we’ve mentioned “layers” a few times, but haven’t discussed how our
+build environment knows which ones to use. That’s what we’re going to do now!</p>
+
+<p>Briefly examine the contents of the <code>conf/bblayers.conf</code> file. Note that the
+only entries in the <code>BBLAYERS</code> list are those associated with <code>poky</code>. We 
+need to add the full paths to the <code>meta-rasperrypi</code> and subdirectories within
+the <code>meta-openembedded</code> repository we cloned earlier.</p>
+
+<p>Although we could edit this file manually, there’s a <code>bitbake-layers</code> command
+that will help us out. Run the following command to see information about its
+usage:</p>
+
+<pre><code>$ bitbake-layers -h
+</code></pre>
+
+<p>From the output of this command, we can see that we want to run the <code>add-layer</code>
+sub-command. Run the command shown below, which has been split onto multiple
+lines here for readability:</p>
+
+<pre><code>$ bitbake-layers add-layer \
+	/portable/yocto/zeus/meta-openembedded/meta-oe \
+ 	/portable/yocto/zeus/meta-openembedded/meta-multimedia \
+ 	/portable/yocto/zeus/meta-openembedded/meta-networking \
+ 	/portable/yocto/zeus/meta-openembedded/meta-python \
+ 	/portable/yocto/zeus/meta-raspberrypi 
+</code></pre>
+
+<p>Be sure to use full paths here. Bitbake may support otherwise nowadays, but
+I personally prefer to stick with full paths lest I forget any important caveats.</p>
+
+<p>After this command completes, note that the <code>bblayers.conf</code> file has been updated.
+Below is a sample of what you’ll see.</p>
+
+<pre><code># POKY_BBLAYERS_CONF_VERSION is increased each time build/conf/bblayers.conf
+# changes incompatibly
+POKY_BBLAYERS_CONF_VERSION = "2"
+
+BBPATH = "${TOPDIR}"
+BBFILES ?= ""
+
+BBLAYERS ?= " \
+  /portable/yocto/zeus/poky/meta \
+  /portable/yocto/zeus/poky/meta-poky \
+  /portable/yocto/zeus/poky/meta-yocto-bsp \
+  /portable/yocto/zeus/meta-openembedded/meta-oe \
+  /portable/yocto/zeus/meta-openembedded/meta-multimedia \
+  /portable/yocto/zeus/meta-openembedded/meta-networking \
+  /portable/yocto/zeus/meta-openembedded/meta-python \
+  /portable/yocto/zeus/meta-raspberrypi \
+  "
+</code></pre>
+
+<h1 id="build-core-image-minimal">Build core-image-minimal</h1>
+
+<p>Let’s start by building a very minimalist Linux image called
+“core-image-minimal”. This will boot and drop you into a busybox environment as
+root. It won’t include much more beyond that, however.</p>
+
+<pre><code> $ bitbake core-image-minimal
+</code></pre>
+
+<h1 id="copy-core-image-minimal-to-an-sd-card">Copy core-image-minimal to an SD card</h1>
+
+<p>When the build completes, an image that’s ready to be dd’d to an SD card will
+be in <code>./tmp/deploy/images</code>. (That’s a directory named <code>tmp</code> within your build directory, <strong>not</strong> <code>/tmp</code>.)</p>
+
+<p>Insert an SD card and write the SD card image to it, replacing <code>sdX</code> with the
+appropriate block device.</p>
+
+<p><em>Take care not to clobber data on the wrong drive due to a typo at this point!</em></p>
+
+<pre><code>$ sudo dd if=./tmp/deploy/images/raspberrypi3/core-image-minimal-raspberrypi3.rpi-sdimg of=/dev/sdX bs=4M
+$ sync
+</code></pre>
+
+<h1 id="boot-core-image-minimal">Boot core-image-minimal</h1>
+
+<p>Attach a USB-UART adapter to the UART pins on the Raspberry Pi’s expansion
+connector as follows:</p>
+
+<pre><code>GND: Pin 6
+TX:  Pin 8
+RX:  Pin 10
+</code></pre>
+
+<p>Open the UART up in minicom, screen, etc. Plug in in the SD card and power on.</p>
+
+<p>Via the UART, you should see boot text and then a login prompt akin to the
+following:</p>
+
+<pre><code> Poky (Yocto Project Reference Distro) 3.0 raspberrypi3 /dev/ttyS0
+
+ raspberrypi3 login: 
+</code></pre>
+
+<p>Enter “root” and you’ll be logged in. Look in your local.conf for an
+“EXTRA_IMAGE_FEATURES” to understand why password-less root login is enabled,
+let alone why root login is even enabled. Hint - it’s a debug feature that you
+have to <em>opt-out</em> of!</p>
+
+<h1 id="building-a-more-functional-base-image">Building a more functional base image</h1>
+
+<p>From the console on the Raspberry Pi, run <code>lsmod</code>.  If you’ve used full-featured
+and general purpose distributions like Raspbian in the past, you might notice that
+none of the drivers you might have expected to see are loaded!</p>
+
+<p>That’s because core-image-minimal did not include the platform-specific kernel
+modules; it’s a minimalist base image that you can expand upon to add additional
+functionality.</p>
+
+<p>In fact, the <code>core-image-base</code> recipe does just that, and may very well be a better
+starting point for your custom firmware images!</p>
+
+<p>To build this, run:</p>
+
+<pre><code>$ bitbake core-image-base
+</code></pre>
+
+<p>You’ll see a bunch of new software being fetched, compiled, and staged for
+deployment in the firmware image. However, everything you’ve already built
+(that doesn’t require rebuilding due to a configuration change) remains
+cached – each successive build you do will generally require far less time.</p>
+
+<p>When that’s done, look for the <code>core-image-base-raspberrypi3.rpi-sdimg</code> in
+<code>./tmp/deploy/images/raspberrypi3/</code> .</p>
+
+<p>Copy this to an SD card as you did earlier and boot it.  Run <code>lsmod</code> again and
+observe that a whole slew of drivers have now been included in the image. Note 
+that the HDMI interface is operational, along with WLAN and BlueTooth interfaces.</p>
+
+<h1 id="creating-your-own-layer">Creating your own layer</h1>
+
+<p>At some point soon, you’ll probably want to integrate your own software,
+scripts, or configuration changes into an image. Creating your own custom
+layer is the right place to begin introducing those changes.</p>
+
+<p>As a general rule of thumb, you shouldn’t be modifying the contents of other
+layers, provided that they are maintained reasonably well. Even in the cases
+when they aren’t, there are often features (like <a href="https://www.yoctoproject.org/docs/3.0/mega-manual/mega-manual.html#var-BBMASK">BBMASK</a>) that you can use to deal with undesired behavior from
+other layers, without needing to worry about maintaining a fork of the
+problematic layer.</p>
+
+<p>Let’s start with an overkill, but simple example, just to go through the
+process of creating a new layer. Let’s say you’ve added some initscripts to an
+image, and after some debugging you’ve realized that BusyBox isn’t configured
+with a particular command or argument that you need.</p>
+
+<p>For example, try to run the commands “xz” and “unxz” from your shell on the
+Raspberry Pi and observe that they’re not present on the system. (At the time of
+writing, these file compression Busybox “applets” are not enabled by default.)
+So, we’ll enable these!</p>
+
+<p>Copying entire recipes into your layer is considered a <a href="https://www.yoctoproject.org/docs/3.0/mega-manual/mega-manual.html#best-practices-to-follow-when-creating-layers">poor practice</a>. Instead,
+the Yocto and OpenEmbedded communities prefer the use of a
+“<a href="https://www.yoctoproject.org/docs/3.0/mega-manual/mega-manual.html#using-bbappend-files"><em>bbappend</em></a>”
+file, which will effectively let you <em>append</em> to the definition of a recipe
+found elsewhere. This allows you modify or redefine variable definitions, as
+well as make changes to the way software is fetched, compiled, “installed”, and
+deployed.</p>
+
+<p>In our case, we’re going to use a <em>bbappend</em> file to change the <code>.config</code> file
+settings used to compile BusyBox.</p>
+
+<p>First, we need to create a new layer. Let’s call it “meta-mypi” and create it
+using that <code>bitbake-layer</code> command we used earlier:</p>
+
+<p>Let’s name our layer “meta-mypi”:</p>
+
+<pre><code>$ bitbake-layers create-layer /portable/yocto/zeus/meta-mypi
+</code></pre>
+
+<p>When done, you should now have a  /portable/yocto/zeus/meta-mypi directory,
+complete with a conf/ directory, an MIT license, a boilerplate README, and
+an example recipe that we won’t concern ourselves with here.</p>
+
+<p>For more info about creating layers, see <a href="https://www.yoctoproject.org/docs/3.0/mega-manual/mega-manual.html#understanding-and-creating-layers">this section in the Yocto Project Development Tasks Manual</a>.</p>
+
+<h1 id="creating-a-bbappend-file-for-busybox">Creating a bbappend file for BusyBox</h1>
+
+<h2 id="first-a-bit-of-background">First, a bit of background</h2>
+
+<p>Recipes are stored in files with a .bb extension.</p>
+
+<p>If we want to add “stuff” or otherwise override definitions in an existing
+recipe, we can do so by creating a corresponding .bbappend file in our own layer.</p>
+
+<p>A .bbappend file must have the same name as its .bb counterpart, and as a
+matter of best practice, should be located in the same relative path within the
+layer.</p>
+
+<p>The BusyBox recipe is found in <a href="https://git.yoctoproject.org/cgit/cgit.cgi/poky/tree/meta/recipes-core/busybox/busybox_1.31.0.bb?h=zeus"><code>poky/meta/recipes-core/busybox/busybox_1.31.0.bb</code></a>. 
+(The exact version string may have change since this tutorial was last updated.)</p>
+
+<p>Note that this bitbake recipe includes the <a href="https://git.yoctoproject.org/cgit/cgit.cgi/poky/tree/meta/recipes-core/busybox/busybox.inc?h=zeus"><code>busybox.inc</code></a> file (via a <code>require</code> directive),
+where most of the work of the recipe is actually implemented.</p>
+
+<p>The <a href="https://git.yoctoproject.org/cgit/cgit.cgi/poky/tree/meta/recipes-core/busybox/busybox?h=zeus"><code>poky/meta/recipes-core/busybox/busybox</code></a> directory contains patches, “configuration
+fragments”, while <a href="https://git.yoctoproject.org/cgit/cgit.cgi/poky/tree/meta/recipes-core/busybox/files?h=zeus"><code>poky/meta/recipes-core/busybox/files</code></a> contains items to deploy within the target filesystem image. You’ll see these referenced via “file://” in the recipe’s <a href="https://www.yoctoproject.org/docs/3.0/mega-manual/mega-manual.html#var-SRC_URI"><code>SRC_URI</code></a> definition.</p>
+
+<p>The term “<a href="https://www.yoctoproject.org/docs/3.0/mega-manual/mega-manual.html#creating-config-fragments">configuration
+fragments</a>”
+is most often used with respect to Linux kernel configuration, but applies to
+the KConfig-esque configuration of BusyBox as well. Basically, these are <code>.cfg</code>
+files that contain just a handful of <code>CONFIG_FEATURE_X=y</code> entries. For recipes
+designed to handle this this KConfig-like convention, we can simply use our bbappend
+to introduce a <code>.cfg</code> file that modifies our desired configuration tweak.</p>
+
+<p><em>(Another quick aside…</em>)</p>
+
+<p>We won’t talk about it here, and don’t get bogged down by it, but know that
+when using bbappend to tweak recipes (most of which don’t use config fragments)
+you may find yourself needing to add a little extra bit of shell or Python code
+in a function within a recipe.  Keep an eye out (i.e. grep around layers) for
+recipes and bbappend files defining functions named <code>do_configure_append()</code> or
+<code>do_configure_prepend()</code> to see examples of this. The Bitbake manual section
+about <a href="https://www.yoctoproject.org/docs/3.0/mega-manual/mega-manual.html#functions">Functions</a>
+explains what’s going on with this syntax.</p>
+
+<h2 id="identifying-what-we-want-to-change">Identifying what we want to change</h2>
+
+<p>Okay, so we want to enable “xz” and “unxz”, but where do we start?</p>
+
+<p>Let’s figure out what the state of the <code>.config</code> file currently is, for the
+Busybox binary we’ve already built.</p>
+
+<p>To do this, we can do a few things, including:</p>
+
+<ol>
+  <li>
+    <p>Inspect the <a href="https://git.yoctoproject.org/cgit/cgit.cgi/poky/tree/meta/recipes-core/busybox/busybox/defconfig?h=zeus"><code>poky/meta/recipes-core/busybox/busybox/defconfig</code></a> file, which
+ gets combined with configuration fragments at build time.</p>
+  </li>
+  <li>
+    <p>Look at the actual .config file that was used to configure the build that has already happened.</p>
+  </li>
+</ol>
+
+<p>For the sake of learning more about bitbake, let’s do number 2. Run the following command.
+This will launch a “devshell” which puts you in a fakeroot-esque environment, located at the
+working directory used when processing the BusyBox recipe.</p>
+
+<pre><code>$ bitbake -c devshell busybox
+</code></pre>
+
+<p>Once you’re in this environment, run the command <code>pwd</code> to see where exactly bitbake has plopped us.
+You’ll find that we’re down a few directories into <code>./tmp/work/</code>.</p>
+
+<p>While in the directory where our devshell has placed us, open the <code>.config</code> file with your favorite editor.
+Search for “XZ” and note that <code>CONFIG_XZ</code> and <code>CONFIG_UNXZ</code> are unset – these are what we want to enable.</p>
+
+<h2 id="implementing-our-change-via-a-bbappend-and-a-config-fragment">Implementing our change via a bbappend and a config fragment</h2>
+
+<p>Close the console opened for the dev shell and navigate to your “meta-mypi”
+directory in a different terminal from the one you’re using to run bitbake
+commands.</p>
+
+<p>Create a <code>meta-mypi/recipes-core/busybox/busybox</code> directory, just to mirror the paths we saw earlier
+in the <code>poky/meta</code> directory tree. Then, create a configuration fragment file in it that specifies
+that we want <code>CONFIG_XZ=y</code> and <code>CONFIG_UNXZ=y</code>.</p>
+
+<pre><code>$ mkdir -p /portable/yocto/zeus/meta-mypi/recipes-core/busybox/busybox
+$ echo "CONFIG_XZ=y"    &gt; /portable/yocto/zeus/meta-mypi/recipes-core/busybox/busybox/xz.cfg
+$ echo "CONFIG_UNXZ=y" &gt;&gt; /portable/yocto/zeus/meta-mypi/recipes-core/busybox/busybox/xz.cfg
+</code></pre>
+
+<p>Next, lets create our actual bbappend file. Create the following file, again adjusting
+slightly if the busybox version has changed since the time of writing.</p>
+
+<pre><code>/portable/yocto/zeus/meta-mypi/recipes-core/busybox/busybox_1.31.0.bbappend
+</code></pre>
+
+<p>You only need to put two lines in this file. Ensure you include the leading
+whitespace in the string on the second line.</p>
+
+<pre><code>FILESEXTRSPATHS_prepend := "${THISDIR}/${PN}:"
+SRC_URI_append := " file://xz.cfg"
+</code></pre>
+
+<p>By setting the <a href="https://www.yoctoproject.org/docs/3.0/mega-manual/mega-manual.html#var-FILESEXTRAPATHS"><code>FILESEXTRASPATHS</code></a> variable, we’re instructing the OpenEmbedded build system to look inside the directory in which our bbappend file resides (<code>${THISDIR}</code>), in a a subdirectory with the same name as our recipe, busybox. (Refer to the <a href="https://www.yoctoproject.org/docs/3.0/mega-manual/mega-manual.html#var-PN">glossary, regarding <code>${PN}</code></a>).</p>
+
+<p>That’s it, as far as the bbappend goes. The last thing to do is enable our new layer, since we haven’t done that yet.</p>
+
+<p>One final note - it would be incredibly annoying if you had to create a new bbappend file for every patch, or even minor, revision bump to a piece of software. As noted <a href="https://www.yoctoproject.org/docs/3.0/mega-manual/mega-manual.html#append-bbappend-files">here</a>, you can actually use a “%” wildcard in the version portion of a recipe filename to match multiple version. We could have named our file, <code>busybox_1.31.%.bbappend</code>, for example, to match all versions in teh 1.31.x series.</p>
+
+<h2 id="enable-our-layer">Enable our layer</h2>
+
+<p>From the terminal where you’ve been running <code>bitbake</code> commands, run <code>bitbake-layers add-layer</code> to add our “meta-mypi” layer. Refer back to the earlier section if you’ve forgotton how to do this.</p>
+
+<p>Double check your <code>conf/bblayers.conf</code>, just to see that the change took effect.</p>
+
+<h2 id="build-with-the-new-layer-enabled">Build with the new layer enabled</h2>
+
+<p>Now we can build our firmware image and our changes will take effect. First, we’ll issue
+a “cleansstate” command to ensure busybox is reconfigured and rebuilt.</p>
+
+<pre><code>$ bitbake -c cleansstate busybox
+$ bitbake core-image-base
+</code></pre>
+
+<p>Technically, that first command isn’t necessary – bitbake will detect the change and will
+identify all the <code>core-image-base</code> dependencies that require rebuilding. It’s quite smart like that.</p>
+
+<p>However, I like to be explicit, just for my own sanity.  <em>Plus, this gave me the chance to note how to
+fully “clean” up the state of a recipe build, without having to have it
+redownloaded, which is what happens if you use “</em>cleanall<em>” instead of
+“</em>cleansstate<em>”.  Using “</em>clean<em>” is essentially like running “make clean” –
+it will clean up compilation, but not configuration, artifacts.</em></p>
+
+<p>When this completes, run <code>bitbake devshell busybox</code> again and confirm that the <code>.config</code>
+file has indeed been updated to reflect our changes. Then write the newly regenerated 
+<code>core-image-base-raspberrypi3.rpi-sdimg</code> to an SD card, boot it, and observe that you can now
+use the “xz” and “unxz” commands in all their glory.</p>
+
+<h1 id="final-words">Final words</h1>
+
+<p>Well, that covers about &lt; 1% of Yocto, but it’s a great start on some commodity
+hardware.  Having done this, you’ll hopefully now have a better sense of what’s
+discussed in the documentation.</p>
+
+<p>If you ever get yourself into trouble, or find that a particular recipe is in a bad state,
+check out the <code>bitbake cleansstate &lt;recipe&gt;</code> and <code>bitbake cleanall &lt;recipe&gt;</code> commands.</p>
+
+<p>I’ll leave it to you to look those up in the reference manual.</p>
+
+<p>There’s definitely quite a learning curve here, but I’ve found that the best way to tackle it is to
+just explore existing recipes, along with the implementation of the Yocto and OpenEmbedded components themselves.</p>
+
+<p>If you run into strange errors, always start by checking for variable name typos. Those will getcha! If you find yourself questioning your sanity, <code>bitbake -e</code> is your friend. I’ll let you look that one up too.</p>
+
+<p><br />
+<em>Good luck and happy hacking!</em></p>
+
+<p><em>- jynik</em></p>
