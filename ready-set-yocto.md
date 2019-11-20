@@ -27,7 +27,8 @@ multiple components, including the [OpenEmbedded] build system, to allow you to
 create custom-tailored embedded Linux "distributions" for your specific needs.
 
 The purpose of this guide is to get you up and running with a minimal build for
-a Raspberry Pi so that you can dive into the documentation while you wait. 
+a Raspberry Pi so that you can get an initial sense of things before you dive
+further into the official documentation. (There's a lot, but it's really, really well done.)
 
 Keep the following at an arm's length. In particular, the "Mega-Manual" is fantastic
 to search through (e.g. via "Ctrl-F") any time you encounter a term or variable
