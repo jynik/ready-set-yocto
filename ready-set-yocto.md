@@ -554,11 +554,11 @@ You only need to put two lines in this file. Ensure you include the leading
 whitespace in the string on the second line.
 
 ~~~
-FILESEXTRSPATHS_prepend := "${THISDIR}/${PN}:"
+FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 SRC_URI_append := " file://xz.cfg"
 ~~~
 
-By setting the [`FILESEXTRASPATHS`](https://www.yoctoproject.org/docs/3.0/mega-manual/mega-manual.html#var-FILESEXTRAPATHS) variable, we're instructing the OpenEmbedded build system to look inside the directory in which our bbappend file resides (`${THISDIR}`), in a a subdirectory with the same name as our recipe, busybox. (Refer to the [glossary, regarding `${PN}`](https://www.yoctoproject.org/docs/3.0/mega-manual/mega-manual.html#var-PN)).
+By setting the [`FILESEXTRAPATHS`](https://www.yoctoproject.org/docs/3.0/mega-manual/mega-manual.html#var-FILESEXTRAPATHS) variable, we're instructing the OpenEmbedded build system to look inside the directory in which our bbappend file resides (`${THISDIR}`), in a a subdirectory with the same name as our recipe, busybox. (Refer to the [glossary, regarding `${PN}`](https://www.yoctoproject.org/docs/3.0/mega-manual/mega-manual.html#var-PN)).
 
 That's it, as far as the bbappend goes. The last thing to do is enable our new layer, since we haven't done that yet.
 
