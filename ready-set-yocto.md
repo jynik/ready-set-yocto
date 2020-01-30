@@ -590,7 +590,7 @@ redownloaded, which is what happens if you use "*cleanall*" instead of
 "*cleansstate*".  Using "*clean*" is essentially like running "make clean" --
 it will clean up compilation, but not configuration, artifacts.*
 
-When this completes, run `bitbake devshell busybox` again and confirm that the `.config`
+When this completes, run `bitbake -c devshell busybox` again and confirm that the `.config`
 file has indeed been updated to reflect our changes. Then write the newly regenerated 
 `core-image-base-raspberrypi3.rpi-sdimg` to an SD card, boot it, and observe that you can now
 use the "xz" and "unxz" commands in all their glory.
@@ -603,7 +603,7 @@ hardware.  Having done this, you'll hopefully now have a better sense of what's
 discussed in the documentation.
 
 If you ever get yourself into trouble, or find that a particular recipe is in a bad state,
-check out the `bitbake cleansstate <recipe>` and `bitbake cleanall <recipe>` commands.
+check out the `bitbake -c cleansstate <recipe>` and `bitbake -c cleanall <recipe>` commands.
 
 I'll leave it to you to look those up in the reference manual.
 
