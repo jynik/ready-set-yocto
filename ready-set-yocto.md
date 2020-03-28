@@ -40,7 +40,7 @@ name that you are unfamiliar with.
 
 ## Shameless Plug ##
 
-The follow white paper, written by yours truly, may also be
+The following white paper, written by yours truly, may also be
 of interest to you once you start to get your bearings. I hope to update this
 for the Zeus (or a later) release in the near future, so feedback on that is
 always welcome.
