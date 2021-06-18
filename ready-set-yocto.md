@@ -1,8 +1,8 @@
 # Ready, Set, Yocto! #
 
-***A short, unofficial guide on getting started with Yocto Release 3.0 ("Zeus") with a Raspberry Pi***
+***A short, unofficial guide on getting started with Yocto Release 3.1 ("Dunfell") with a Raspberry Pi***
 
-**Release**: 3.0 "Zeus"
+**Release**: 3.1 "Dunfell"
 
 **Author**: Jon Szymaniak ([jynik] / [@sz_jynik])
 
@@ -18,7 +18,7 @@
 If you're looking to build Linux-based firmware for embedded platforms, Yocto
 is a good option for you. 
 
-If you're looking to create reproducible and version-controlled automated 
+If you're looking to create automated, reproducible, and version-controlled 
 firmware builds with excellent traceability, change tracking, license auditing,
 configurable QA tests, and support for tons of software... Yocto is a great option for you!
 
@@ -42,8 +42,7 @@ name that you are unfamiliar with.
 
 The follow white paper, written by yours truly, may also be
 of interest to you once you start to get your bearings. I hope to update this
-for the Zeus (or a later) release in the near future, so feedback on that is
-always welcome.
+for a Yocto LTS release in the future, so feedback on that is always welcome.
 
 [Improving Your Embedded Linux Security Posture with Yocto]
 
@@ -61,9 +60,9 @@ comparisons of all three projects [here](https://www.yoctoproject.org/learn-item
 
 [Yocto Quick Start Guide]: https://www.yoctoproject.org/docs/latest/yocto-project-qs/yocto-project-qs.html
 
-[Bitbake User Manual]: https://www.yoctoproject.org/docs/3.0/bitbake-user-manual/bitbake-user-manual.html
+[Bitbake User Manual]: https://www.yoctoproject.org/docs/3.1/bitbake-user-manual/bitbake-user-manual.html
 
-[Yocto Mega-Manual]: https://www.yoctoproject.org/docs/3.0/mega-manual/mega-manual.html
+[Yocto Mega-Manual]: https://www.yoctoproject.org/docs/3.1/mega-manual/mega-manual.html
 
 [OpenEmbedded]: https://www.openembedded.org/wiki/Main_Page
 
@@ -79,7 +78,7 @@ portable SSD that can be moved from machine to machine.
 
 My (minimum) recommended setup is:
 
-* (X|K)Ubuntu 18.04 LTS (or some similarly recent-ish distro of your choice)
+* (X|K)Ubuntu 20.04 LTS (or some similarly recent-ish distro of your choice)
 * At least 8 GiB of RAM
 * At least an Intel i5 (or AMD equivalent) 
 * At least 200 GiB of disk space, preferably on an SSD
@@ -87,7 +86,7 @@ My (minimum) recommended setup is:
 To enable me to move from machine to machine (e.g., desktop to laptop) 
 with my build environment, I use a portable SSD with the following restrictions,
 
-* The SSD is formatted with EXT4
+* The SSD is formatted with EXT4. ZFS will cause you pain.
 * All machines mount the SSD to the same exact mountpoint, i.e. `/portable`
 * The User and Group IDs I use between machines match. If you can't guarantee
 	this with already existing users, consider making a new uid and gid for
@@ -99,10 +98,10 @@ and deviate from those restrictions, you'll probably run into problems.
 
 # Dependencies #
 
-You'll need to install some tools to get started. For the apt users out there...
+You'll need to install some tools to get started. For the (X|K|U)buntu apt users out there...
 
 ~~~
- $ sudo apt install build-essential chrpath gawk git texinfo
+ $ sudo apt install build-essential chrpath gawk git bmap-tools texinfo
 ~~~
 
 # Build System and Required Layers #
@@ -114,21 +113,21 @@ Oftentimes I'll keep multiple Yocto releases on my system, so let's create
 a directory for the current version:
 
 ~~~
- $ mkdir -p /portable/yocto/zeus
- $ cd /portable/yocto/zeus
+ $ mkdir -p /portable/yocto/dunfell
+ $ cd /portable/yocto/dunfell
 ~~~
 
 Let's also make some directories we'll use later:
 
 ~~~
- $ mkdir /portable/yocto/zeus/builds
- $ mkdir /portable/yocto/zeus/downloads
+ $ mkdir /portable/yocto/dunfell/builds
+ $ mkdir /portable/yocto/dunfell/downloads
 ~~~
 
-Now lets check out the zeus branch of "Poky" - Yocto's Build system:
+Now lets check out the dunfell branch of "Poky" - Yocto's Build system:
 
 ~~~
- $ git clone -b zeus git://git.yoctoproject.org/poky.git
+ $ git clone -b dunfell git://git.yoctoproject.org/poky.git
 ~~~
 
 The bitbake tool used by Yocto parses "recipes" that describe how to fetch,
@@ -137,10 +136,10 @@ patch, configure, compile, install, and package software. Collections of related
 with "*meta-"*.
 
 There's a layer dedicated to Raspberry Pi support. Let's fetch that. Note that
-we're still in `/portable/yocto/zeus` still!
+we're still in `/portable/yocto/dunfell` still!
 
 ~~~
- $ git clone -b zeus https://github.com/agherzan/meta-raspberrypi.git
+ $ git clone -b dunfell https://github.com/agherzan/meta-raspberrypi.git
 ~~~
 
 If you take a look at `meta-raspberrypi/README.md`, you'll note that it has
@@ -148,7 +147,7 @@ dependencies on *meta-oe*, *meta-multimedia*, *meta-networking*, and *meta-pytho
 Fortunately, these are all in one repo:
 
 ~~~
- $ git clone -b zeus git://git.openembedded.org/meta-openembedded
+ $ git clone -b dunfell git://git.openembedded.org/meta-openembedded
 ~~~
 
 # Enter Your Build Environment #
@@ -162,7 +161,7 @@ will be created and initialized if it doesn't exist. Lets start a new build
 directory called "rpi":
 
 ~~~
- $ source /portable/yocto/zeus/poky/oe-init-build-env /portable/yocto/zeus/builds/rpi
+ $ source /portable/yocto/dunfell/poky/oe-init-build-env /portable/yocto/dunfell/builds/rpi
 ~~~
 
 You should see some text welcoming you into the environment. You will be placed
@@ -179,7 +178,7 @@ There are two files to configure in this directory:
 Open up `conf/local.conf` in your favorite editor and find this line:
 
 ~~~
-MACHINE ??= "qemux86"
+MACHINE ??= "qemux86-64"
 ~~~
 
 This denotes which platform we're targeting. This string corresponds
@@ -201,7 +200,7 @@ operates it in 32-bit mode.
 If you look at the content in these machine configuration files, you'll find that
 there's not a whole lot in there. This is because a majority of the "common stuff"
 is all tucked away in files that are included (*think #include in C/C++*) via the
-[`include`](https://www.yoctoproject.org/docs/3.0/bitbake-user-manual/bitbake-user-manual.html#include-directive) and [`required`](https://www.yoctoproject.org/docs/3.0/bitbake-user-manual/bitbake-user-manual.html#require-inclusion) directives.
+[`include`](https://www.yoctoproject.org/docs/3.1/bitbake-user-manual/bitbake-user-manual.html#include-directive) and [`required`](https://www.yoctoproject.org/docs/3.1/bitbake-user-manual/bitbake-user-manual.html#require-inclusion) directives.
 
 Thus, the machine configuration files only override or expand upon variable definitions as-needed to do things like...
 
@@ -225,7 +224,7 @@ Next, change the `DL_DIR` variable to point to a location where we should
 store downloaded files. I recommend setting this to something like...
 
 ~~~
-DL_DIR = "/portable/yocto/zeus/downloads"
+DL_DIR = "/portable/yocto/dunfell/downloads"
 ~~~
 
 This variable specifies where we want to store downloaded files. For my own
@@ -236,7 +235,7 @@ to re-download items I already have. This is purely a matter of preference.
 ## Raspberry Pi-Specific Configurations ##
 
 Before we're done editing the `local.conf` file, take a quick skim through the
-`meta-raspberrypi` layer's [`docs/extra-build-config.md`](https://git.yoctoproject.org/cgit/cgit.cgi/meta-raspberrypi/tree/docs/extra-build-config.md?h=zeus) file.  
+`meta-raspberrypi` layer's [`docs/extra-build-config.md`](https://git.yoctoproject.org/cgit/cgit.cgi/meta-raspberrypi/tree/docs/extra-build-config.md?h=dunfell) file.  
 
 This describes a variety of `local.conf` definitions that you can use to
 enable/disable/modify what ultimately gets written to the `config.txt` file
@@ -290,11 +289,11 @@ lines here for readability:
 
 ~~~
 $ bitbake-layers add-layer \
-	/portable/yocto/zeus/meta-openembedded/meta-oe \
- 	/portable/yocto/zeus/meta-openembedded/meta-multimedia \
- 	/portable/yocto/zeus/meta-openembedded/meta-networking \
- 	/portable/yocto/zeus/meta-openembedded/meta-python \
- 	/portable/yocto/zeus/meta-raspberrypi 
+	/portable/yocto/dunfell/meta-openembedded/meta-oe \
+ 	/portable/yocto/dunfell/meta-openembedded/meta-multimedia \
+ 	/portable/yocto/dunfell/meta-openembedded/meta-networking \
+ 	/portable/yocto/dunfell/meta-openembedded/meta-python \
+ 	/portable/yocto/dunfell/meta-raspberrypi 
 ~~~
 
 Be sure to use full paths here. Bitbake may support otherwise nowadays, but
@@ -312,14 +311,14 @@ BBPATH = "${TOPDIR}"
 BBFILES ?= ""
 
 BBLAYERS ?= " \
-  /portable/yocto/zeus/poky/meta \
-  /portable/yocto/zeus/poky/meta-poky \
-  /portable/yocto/zeus/poky/meta-yocto-bsp \
-  /portable/yocto/zeus/meta-openembedded/meta-oe \
-  /portable/yocto/zeus/meta-openembedded/meta-multimedia \
-  /portable/yocto/zeus/meta-openembedded/meta-networking \
-  /portable/yocto/zeus/meta-openembedded/meta-python \
-  /portable/yocto/zeus/meta-raspberrypi \
+  /portable/yocto/dunfell/poky/meta \
+  /portable/yocto/dunfell/poky/meta-poky \
+  /portable/yocto/dunfell/poky/meta-yocto-bsp \
+  /portable/yocto/dunfell/meta-openembedded/meta-oe \
+  /portable/yocto/dunfell/meta-openembedded/meta-multimedia \
+  /portable/yocto/dunfell/meta-openembedded/meta-networking \
+  /portable/yocto/dunfell/meta-openembedded/meta-python \
+  /portable/yocto/dunfell/meta-raspberrypi \
   "
 ~~~
 
@@ -327,14 +326,79 @@ BBLAYERS ?= " \
 
 Let's start by building a very minimalist Linux image called
 "core-image-minimal". This will boot and drop you into a busybox environment as
-root. It won't include much more beyond that, however.
+root. It won't include much more beyond that, however. (The idea is that this
+provides a minimalist base that other image recipes can build atop of.)
 
 ~~~
  $ bitbake core-image-minimal
 ~~~
 
+A word of warning -- if you're a ZFS user on a 20.04 LTS, you'll run into an error like this.  Remember when I said to use something like EXT4? This is why.
+
+~~~
+| bmaptool: ERROR: cannot generate bmap for file 'core-image-minimal-raspberrypi3-20210604145240.rootfs.wic': the file-system does not support "SEEK_HOLE" and "SEEK_DATA" but only provides a stub implementation
+|
+| WARNING: exit code 1 from a shell command.
+~~~
+
+The first builds will take quite sometime, given that you'll be fetching and
+compling a toolchain, the kernel, and other core software.  Once it's 
+complete, you'll find that your build artifacts located in: `./tmp/deploy/images/$MACHINE/`
+
+These build artifacts will be timestamped, with the most recent builds symlinked via
+shortend filenames without timestamps.
+
+Once the build is complete -- and the first time you have to let the build process
+fetch and build your core toolchain and software, it will take a while -- you'll 
+find your build artifacts located in `./tmp/deploy/images/<$MACHINE>`.
+
+For now, let's just focus on artifacts starting with our image name, as this will 
+lead us to our complete, all-in-one image that we can write to our device's non-volatile
+storage -- an SD card in the case of a dev-friendly RPi, but generally eMMC or NAND/NOR flash
+on other devices.
+
+
+Below is an example directory listing, with some irrelevant items removed.
+
+~~~
+$ ls tmp/deploy/images/raspberrypi3/core-image-minimal*
+tmp/deploy/images/raspberrypi3/core-image-minimal-raspberrypi3-20210604043230.rootfs.ext3
+tmp/deploy/images/raspberrypi3/core-image-minimal-raspberrypi3-20210604043230.rootfs.tar.bz2
+tmp/deploy/images/raspberrypi3/core-image-minimal-raspberrypi3-20210604043230.rootfs.wic
+tmp/deploy/images/raspberrypi3/core-image-minimal-raspberrypi3-20210604043230.rootfs.wic.bmap
+tmp/deploy/images/raspberrypi3/core-image-minimal-raspberrypi3-20210604043230.rootfs.wic.bz2
+tmp/deploy/images/raspberrypi3/core-image-minimal-raspberrypi3.ext3
+tmp/deploy/images/raspberrypi3/core-image-minimal-raspberrypi3.tar.bz2
+tmp/deploy/images/raspberrypi3/core-image-minimal-raspberrypi3.wic.bmap
+tmp/deploy/images/raspberrypi3/core-image-minimal-raspberrypi3.wic.bz2
+~~~
+
+## What am I looking at here?
+
+In order to define what types of root filesystems image we want -- as well ready-to-flash composite images 
+containing a bootloader, kernel, and filesystems -- we the [IMAGE_FSTYPES]. As you see [here](https://docs.yoctoproject.org/3.1.8/singleindex.html#term-IMAGE_TYPES),
+there are a lot of available options!
+
+In the case of the *meta-raspberrypi* layer, an include file that defines various properties about
+our target `${MACHINE}` (`raspberrypi3`), contains an "[early default assignment]" (`?=`) of `IMAGE_FSTYPES`,
+resulting in the items shown above.  Note that you can append to IMAGE_FSTYPES in `local.conf` if you
+would like to expirament with creating say, 
+
+[IMAGE_FSTYPES]: <https://docs.yoctoproject.org/3.1.8/singleindex.html#term-IMAGE_FSTYPES>
+[early default assignment]: <https://github.com/agherzan/meta-raspberrypi/blob/dunfell/conf/machine/include/rpi-base.inc#L8>
+
+##  So what's this `.wic` file?
+
+The [Wic tool] creates partitioned images from various build artifacts.
+
+[Wic tool]: <https://docs.yoctoproject.org/3.1.8/singleindex.html#creating-partitioned-images-using-wic>
+
 
 # Copy core-image-minimal to an SD card #
+
+TODO: Talk about [bmaptool](https://github.com/intel/bmap-tools)
+
+[bmaptool](https://www.yoctoproject.org/docs/2.3/dev-manual/dev-manual.html#flashing-images-using-bmaptool)
 
 When the build completes, an image that's ready to be dd'd to an SD card will
 be in `./tmp/deploy/images`. (That's a directory named `tmp` within your build directory, **not** `/tmp`.)
@@ -345,8 +409,28 @@ appropriate block device.
 *Take care not to clobber data on the wrong drive due to a typo at this point!*
 
 ~~~
-$ sudo dd if=./tmp/deploy/images/raspberrypi3/core-image-minimal-raspberrypi3.rpi-sdimg of=/dev/sdX bs=4M
-$ sync
+sudo bmaptool copy tmp/deploy/images/raspberrypi3/core-image-minimal-raspberrypi3.wic.bz2 /dev/sdc
+bmaptool: info: discovered bmap file 'tmp/deploy/images/raspberrypi3/core-image-minimal-raspberrypi3.wic.bmap'
+bmaptool: info: block map format version 2.0
+bmaptool: info: 19546 blocks of size 4096 (76.3 MiB), mapped 8623 blocks (33.7 MiB or 44.1%)
+bmaptool: info: copying image 'core-image-minimal-raspberrypi3.wic.bz2' to block device '/dev/sdc' using bmap file 'core-image-minimal-raspberrypi3.wic.bmap'
+bmaptool: info: 100% copied
+bmaptool: info: synchronizing '/dev/sdc'
+bmaptool: info: copying time: 4.9s, copying speed 6.8 MiB/sec
+~~~
+
+
+If you receive the following error, you likely have one or more filesystems
+(auto)mounted on the block device. You'll first need to unmount them before
+running bmaptool.
+
+~~~
+bmaptool: ERROR: An error occurred, here is the traceback:
+Traceback (most recent call last):
+  File "/usr/lib/python3/dist-packages/bmaptools/CLI.py", line 116, in open_block_device
+    descriptor = os.open(path, os.O_WRONLY | os.O_EXCL)
+
+bmaptool: ERROR: cannot open block device '/dev/sdc' in exclusive mode: [Errno 16] Device or resource busy: '/dev/sd
 ~~~
 
 # Boot core-image-minimal #
@@ -366,7 +450,7 @@ Via the UART, you should see boot text and then a login prompt akin to the
 following:
 
 ~~~
- Poky (Yocto Project Reference Distro) 3.0 raspberrypi3 /dev/ttyS0
+ Poky (Yocto Project Reference Distro) 3.1 raspberrypi3 /dev/ttyS0
 
  raspberrypi3 login: 
 ~~~
@@ -416,7 +500,7 @@ layer is the right place to begin introducing those changes.
 
 As a general rule of thumb, you shouldn't be modifying the contents of other
 layers, provided that they are maintained reasonably well. Even in the cases
-when they aren't, there are often features (like [BBMASK](https://www.yoctoproject.org/docs/3.0/mega-manual/mega-manual.html#var-BBMASK)) that you can use to deal with undesired behavior from
+when they aren't, there are often features (like [BBMASK](https://www.yoctoproject.org/docs/3.1/mega-manual/mega-manual.html#var-BBMASK)) that you can use to deal with undesired behavior from
 other layers, without needing to worry about maintaining a fork of the
 problematic layer.
 
@@ -430,9 +514,9 @@ Raspberry Pi and observe that they're not present on the system. (At the time of
 writing, these file compression Busybox "applets" are not enabled by default.)
 So, we'll enable these!
 
-Copying entire recipes into your layer is considered a [poor practice](https://www.yoctoproject.org/docs/3.0/mega-manual/mega-manual.html#best-practices-to-follow-when-creating-layers). Instead,
+Copying entire recipes into your layer is considered a [poor practice](https://www.yoctoproject.org/docs/3.1/mega-manual/mega-manual.html#best-practices-to-follow-when-creating-layers). Instead,
 the Yocto and OpenEmbedded communities prefer the use of a
-"[*bbappend*](https://www.yoctoproject.org/docs/3.0/mega-manual/mega-manual.html#using-bbappend-files)"
+"[*bbappend*](https://www.yoctoproject.org/docs/3.1/mega-manual/mega-manual.html#using-bbappend-files)"
 file, which will effectively let you *append* to the definition of a recipe
 found elsewhere. This allows you modify or redefine variable definitions, as
 well as make changes to the way software is fetched, compiled, "installed", and
@@ -447,14 +531,14 @@ using that `bitbake-layer` command we used earlier:
 Let's name our layer "meta-mypi":
 
 ~~~
-$ bitbake-layers create-layer /portable/yocto/zeus/meta-mypi
+$ bitbake-layers create-layer /portable/yocto/dunfell/meta-mypi
 ~~~
 
-When done, you should now have a  /portable/yocto/zeus/meta-mypi directory,
+When done, you should now have a  /portable/yocto/dunfell/meta-mypi directory,
 complete with a conf/ directory, an MIT license, a boilerplate README, and
 an example recipe that we won't concern ourselves with here.
 
-For more info about creating layers, see [this section in the Yocto Project Development Tasks Manual](https://www.yoctoproject.org/docs/3.0/mega-manual/mega-manual.html#understanding-and-creating-layers).
+For more info about creating layers, see [this section in the Yocto Project Development Tasks Manual](https://www.yoctoproject.org/docs/3.1/mega-manual/mega-manual.html#understanding-and-creating-layers).
 
 # Creating a bbappend file for BusyBox #
 
@@ -476,10 +560,10 @@ Note that this bitbake recipe includes the [`busybox.inc`](https://git.yoctoproj
 where most of the work of the recipe is actually implemented. 
 
 The [`poky/meta/recipes-core/busybox/busybox`](https://git.yoctoproject.org/cgit/cgit.cgi/poky/tree/meta/recipes-core/busybox/busybox?h=zeus) directory contains patches, "configuration
-fragments", while [`poky/meta/recipes-core/busybox/files`](https://git.yoctoproject.org/cgit/cgit.cgi/poky/tree/meta/recipes-core/busybox/files?h=zeus) contains items to deploy within the target filesystem image. You'll see these referenced via "file://" in the recipe's [`SRC_URI`](https://www.yoctoproject.org/docs/3.0/mega-manual/mega-manual.html#var-SRC_URI) definition.
+fragments", while [`poky/meta/recipes-core/busybox/files`](https://git.yoctoproject.org/cgit/cgit.cgi/poky/tree/meta/recipes-core/busybox/files?h=zeus) contains items to deploy within the target filesystem image. You'll see these referenced via "file://" in the recipe's [`SRC_URI`](https://www.yoctoproject.org/docs/3.1/mega-manual/mega-manual.html#var-SRC_URI) definition.
 
 The term "[configuration
-fragments](https://www.yoctoproject.org/docs/3.0/mega-manual/mega-manual.html#creating-config-fragments)"
+fragments](https://www.yoctoproject.org/docs/3.1/mega-manual/mega-manual.html#creating-config-fragments)"
 is most often used with respect to Linux kernel configuration, but applies to
 the KConfig-esque configuration of BusyBox as well. Basically, these are `.cfg`
 files that contain just a handful of `CONFIG_FEATURE_X=y` entries. For recipes
@@ -494,7 +578,7 @@ you may find yourself needing to add a little extra bit of shell or Python code
 in a function within a recipe.  Keep an eye out (i.e. grep around layers) for
 recipes and bbappend files defining functions named `do_configure_append()` or
 `do_configure_prepend()` to see examples of this. The Bitbake manual section
-about [Functions](https://www.yoctoproject.org/docs/3.0/mega-manual/mega-manual.html#functions)
+about [Functions](https://www.yoctoproject.org/docs/3.1/mega-manual/mega-manual.html#functions)
 explains what's going on with this syntax.
 
 ## Identifying what we want to change ##
@@ -537,16 +621,16 @@ in the `poky/meta` directory tree. Then, create a configuration fragment file in
 that we want `CONFIG_XZ=y` and `CONFIG_UNXZ=y`.
 
 ~~~
-$ mkdir -p /portable/yocto/zeus/meta-mypi/recipes-core/busybox/busybox
-$ echo "CONFIG_XZ=y"    > /portable/yocto/zeus/meta-mypi/recipes-core/busybox/busybox/xz.cfg
-$ echo "CONFIG_UNXZ=y" >> /portable/yocto/zeus/meta-mypi/recipes-core/busybox/busybox/xz.cfg
+$ mkdir -p /portable/yocto/dunfell/meta-mypi/recipes-core/busybox/busybox
+$ echo "CONFIG_XZ=y"    > /portable/yocto/dunfell/meta-mypi/recipes-core/busybox/busybox/xz.cfg
+$ echo "CONFIG_UNXZ=y" >> /portable/yocto/dunfell/meta-mypi/recipes-core/busybox/busybox/xz.cfg
 ~~~
 
 Next, lets create our actual bbappend file. Create the following file, again adjusting
 slightly if the busybox version has changed since the time of writing.
 
 ~~~
-/portable/yocto/zeus/meta-mypi/recipes-core/busybox/busybox_1.31.0.bbappend
+/portable/yocto/dunfell/meta-mypi/recipes-core/busybox/busybox_1.31.0.bbappend
 ~~~
 
 You only need to put two lines in this file. Ensure you include the leading
@@ -557,11 +641,11 @@ FILESEXTRSPATHS_prepend := "${THISDIR}/${PN}:"
 SRC_URI_append := " file://xz.cfg"
 ~~~
 
-By setting the [`FILESEXTRASPATHS`](https://www.yoctoproject.org/docs/3.0/mega-manual/mega-manual.html#var-FILESEXTRAPATHS) variable, we're instructing the OpenEmbedded build system to look inside the directory in which our bbappend file resides (`${THISDIR}`), in a a subdirectory with the same name as our recipe, busybox. (Refer to the [glossary, regarding `${PN}`](https://www.yoctoproject.org/docs/3.0/mega-manual/mega-manual.html#var-PN)).
+By setting the [`FILESEXTRASPATHS`](https://www.yoctoproject.org/docs/3.1/mega-manual/mega-manual.html#var-FILESEXTRAPATHS) variable, we're instructing the OpenEmbedded build system to look inside the directory in which our bbappend file resides (`${THISDIR}`), in a a subdirectory with the same name as our recipe, busybox. (Refer to the [glossary, regarding `${PN}`](https://www.yoctoproject.org/docs/3.1/mega-manual/mega-manual.html#var-PN)).
 
 That's it, as far as the bbappend goes. The last thing to do is enable our new layer, since we haven't done that yet.
 
-One final note - it would be incredibly annoying if you had to create a new bbappend file for every patch, or even minor, revision bump to a piece of software. As noted [here](https://www.yoctoproject.org/docs/3.0/mega-manual/mega-manual.html#append-bbappend-files), you can actually use a "%" wildcard in the version portion of a recipe filename to match multiple version. We could have named our file, `busybox_1.31.%.bbappend`, for example, to match all versions in teh 1.31.x series.
+One final note - it would be incredibly annoying if you had to create a new bbappend file for every patch, or even minor, revision bump to a piece of software. As noted [here](https://www.yoctoproject.org/docs/3.1/mega-manual/mega-manual.html#append-bbappend-files), you can actually use a "%" wildcard in the version portion of a recipe filename to match multiple version. We could have named our file, `busybox_1.31.%.bbappend`, for example, to match all versions in teh 1.31.x series.
 
 ## Enable our layer ##
 
