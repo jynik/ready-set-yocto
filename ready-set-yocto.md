@@ -34,15 +34,16 @@ Keep the following at an arm's length. In particular, the "Mega-Manual" is fanta
 to search through (e.g. via "Ctrl-F") any time you encounter a term or variable
 name that you are unfamiliar with.
 
-* [Yocto Quick Start Guide]
+* [Yocto Project Quick Build]
 * [Bitbake User Manual]
 * [Yocto Mega-Manual]
 
 ## Shameless Plug ##
 
 The follow white paper, written by yours truly, may also be
-of interest to you once you start to get your bearings. I hope to update this
-for a Yocto LTS release in the future, so feedback on that is always welcome.
+of interest to you once you start to get your bearings. It's now
+super outdated (which I hope to address eventually), but some of
+the higher-level ideas and intentions st
 
 [Improving Your Embedded Linux Security Posture with Yocto]
 
@@ -58,11 +59,11 @@ If you ultimately find that you're having a lot of trouble or just don't like so
 about Yocto/OpenEmbedded, consider kicking the tires on BuildRoot. You can find
 comparisons of all three projects [here](https://www.yoctoproject.org/learn-items/elc-2016-buildroot-vs-yocto-projectopenembedded-alexandre-belloni/).
 
-[Yocto Quick Start Guide]: https://www.yoctoproject.org/docs/latest/yocto-project-qs/yocto-project-qs.html
+[Yocto Project Quick Build]: https://docs.yoctoproject.org/3.1.14/brief-yoctoprojectqs/brief-yoctoprojectqs.html
 
-[Bitbake User Manual]: https://www.yoctoproject.org/docs/3.1/bitbake-user-manual/bitbake-user-manual.html
+[Bitbake User Manual]: https://docs.yoctoproject.org/bitbake/1.46/
 
-[Yocto Mega-Manual]: https://www.yoctoproject.org/docs/3.1/mega-manual/mega-manual.html
+[Yocto Mega-Manual]: https://docs.yoctoproject.org/3.1.14/
 
 [OpenEmbedded]: https://www.openembedded.org/wiki/Main_Page
 
@@ -76,12 +77,13 @@ needs. This guide DOES NOT cover a configuration suitable for production build
 deployments. Instead, this covers a "personal dev setup" installed onto a 
 portable SSD that can be moved from machine to machine.
 
-My (minimum) recommended setup is:
+My personal preference for build host "minimum requirements" are as follows:
 
 * (X|K)Ubuntu 20.04 LTS (or some similarly recent-ish distro of your choice)
 * At least 8 GiB of RAM
 * At least an Intel i5 (or AMD equivalent) 
 * At least 200 GiB of disk space, preferably on an SSD
+* bash - Even if you love zsh or fish... trust me and just use bash for this.
 
 To enable me to move from machine to machine (e.g., desktop to laptop) 
 with my build environment, I use a portable SSD with the following restrictions,
@@ -101,7 +103,7 @@ and deviate from those restrictions, you'll probably run into problems.
 You'll need to install some tools to get started. For the (X|K|U)buntu apt users out there...
 
 ~~~
- $ sudo apt install build-essential chrpath gawk git bmap-tools texinfo
+ $ sudo apt install build-essential chrpath gawk git bmap-tools texinfo diffstat
 ~~~
 
 # Build System and Required Layers #
@@ -131,9 +133,11 @@ Now lets check out the dunfell branch of "Poky" - Yocto's Build system:
 ~~~
 
 The bitbake tool used by Yocto parses "recipes" that describe how to fetch,
-patch, configure, compile, install, and package software. Collections of related
-"recipes" are grouped into "layers" and their names are typically prefixed 
-with "*meta-"*.
+patch, configure, compile, install, package, and "deploy" software (into the
+top-level image artifact). 
+
+Collections of related "recipes" are grouped into "layers" and their names 
+are prefixed with "*meta-"*.
 
 There's a layer dedicated to Raspberry Pi support. Let's fetch that. Note that
 we're still in `/portable/yocto/dunfell` still!
@@ -169,9 +173,71 @@ into the *rpi* directory that was just created.
 
 There are two files to configure in this directory:
 
-* `conf/local.conf` - Build variables and options
 * `conf/bblayers.conf` - Points the build environment to the layers you want to use
+* `conf/local.conf` - Build variables and options
 
+# Populate conf/bblayers.conf #
+
+So far we've cloned the get repository for a few "layers" but we haven't
+yet pointed the build tools to them. That's what we'll do now!
+
+Briefly examine the contents of the `conf/bblayers.conf` file. Note that the
+only entries in the `BBLAYERS` list are those associated with `poky`. We 
+need to add the full paths to the `meta-rasperrypi` and subdirectories within
+the `meta-openembedded` repository we cloned earlier.
+
+Although we could edit this file manually, there's a `bitbake-layers` command
+that will help us out. Run the following command to see information about its
+usage:
+
+~~~
+$ bitbake-layers -h
+~~~
+
+From the output of this command, we can see that we want to run the `add-layer`
+sub-command. Run the command shown below, which has been split onto multiple
+lines here for readability.
+
+~~~
+$ bitbake-layers add-layer \
+	/portable/yocto/dunfell/meta-openembedded/meta-oe \
+ 	/portable/yocto/dunfell/meta-openembedded/meta-multimedia \
+ 	/portable/yocto/dunfell/meta-openembedded/meta-networking \
+ 	/portable/yocto/dunfell/meta-openembedded/meta-python \
+ 	/portable/yocto/dunfell/meta-raspberrypi 
+~~~
+
+At this point, you might run into a `HOSTTOOLS` error if some program(s)
+is not installed on the system. For example, here's an error message that
+indicates that we forgot to `sudo apt install diffstat`:
+
+~~~
+ERROR: The following required tools (as specified by HOSTTOOLS) appear to be unavailable in PATH, please install them in order to proceed:
+  diffstat
+~~~
+
+After this command completes, note that the `bblayers.conf` file has been updated.
+Below is a sample of what you'll see.
+
+~~~
+# POKY_BBLAYERS_CONF_VERSION is increased each time build/conf/bblayers.conf
+# changes incompatibly
+POKY_BBLAYERS_CONF_VERSION = "2"
+
+BBPATH = "${TOPDIR}"
+BBFILES ?= ""
+
+BBLAYERS ?= " \
+  /portable/yocto/dunfell/poky/meta \
+  /portable/yocto/dunfell/poky/meta-poky \
+  /portable/yocto/dunfell/poky/meta-yocto-bsp \
+  /portable/yocto/dunfell/meta-openembedded/meta-oe \
+  /portable/yocto/dunfell/meta-openembedded/meta-multimedia \
+  /portable/yocto/dunfell/meta-openembedded/meta-networking \
+  /portable/yocto/dunfell/meta-openembedded/meta-python \
+  /portable/yocto/dunfell/meta-raspberrypi \
+  "
+~~~
 
 # Edit conf/local.conf #
 
@@ -235,24 +301,27 @@ to re-download items I already have. This is purely a matter of preference.
 ## Raspberry Pi-Specific Configurations ##
 
 Before we're done editing the `local.conf` file, take a quick skim through the
-`meta-raspberrypi` layer's [`docs/extra-build-config.md`](https://git.yoctoproject.org/cgit/cgit.cgi/meta-raspberrypi/tree/docs/extra-build-config.md?h=dunfell) file.  
+`meta-raspberrypi` layer's [`docs/extra-build-config.md`](https://git.yoctoproject.org/cgit/cgit.cgi/meta-raspberrypi/tree/docs/extra-build-config.md?h=dunfell) file. 
 
 This describes a variety of `local.conf` definitions that you can use to
 enable/disable/modify what ultimately gets written to the `config.txt` file
 stored in the image's boot volume, which used to [configure the Raspberry Pi at
 runtime](https://www.raspberrypi.org/documentation/configuration/config-txt/README.md).
 
-Frankly, the Raspberry Pi is bit weird and atypical in this regard; this type
-of configuration deviates a bit from the spirit of Yocto/OpenEmbedded, which I
-suspect stems from the fact that it's a designed to be a platform for people
+Frankly, the Raspberry Pi feels a bit weird and atypical in this regard. I think that
+this type of configuration deviates a bit from the spirit of Yocto/OpenEmbedded and
+suspect this stems from the fact that it's a designed to be a platform for people
 modify, customize, and hack on -- this differs from a product designed to implement
-only a very specific set of requirements, which is what the build system is
-intended for.
+only a very specific set of requirements, which is where I feel the Yocto
+project really shines.
 
 If you plan on distributing your custom firmware build setup to other people
-(or are responsible for maintaining the firmware build process for your
-product), avoid heavy use of local.conf tweaks. Instead use custom layers, custom
-machine configuration files, and  "bbappend" files -- we'll learn about those more a bit later.  
+(and especially if you are responsible for maintaining the firmware build process for your
+product), avoid heavy use of local.conf tweaks. Instead use custom [distro layers](https://docs.yoctoproject.org/3.1.14/overview-manual/overview-manual-concepts.html#distro-layer), 
+custom machine configuration files, and  "bbappend" files -- we'll learn about those more a bit later.
+That being said -- it's also neighborly to provide a "known good" local.conf file 
+template when creating your own "distro" layer... especially if you have some
+of your own custom dev/debug knobs people can turn!
 
 For now, just roll with this, and know there's a "better" approach for builds
 that aren't just one-off experiments.
@@ -264,63 +333,9 @@ you may be interested in if you're planning to use I2C and SPI interfaces.
 * `ENABLE_UART = "1"`    - If you'd like to access a shell via the UART
 * `RPI_USE_U_BOOT = "1"` - If you'd like to use the U-Boot bootloader
 
+Moar shameless plugging: Why would you want to enable U-Boot? Well, to play with [Depthcharge](https://depthcharge.rtfd.io) of course!
 
-# Edit conf/bblayers.conf #
 
-So far we've mentioned "layers" a few times, but haven't discussed how our
-build environment knows which ones to use. That's what we're going to do now!
-
-Briefly examine the contents of the `conf/bblayers.conf` file. Note that the
-only entries in the `BBLAYERS` list are those associated with `poky`. We 
-need to add the full paths to the `meta-rasperrypi` and subdirectories within
-the `meta-openembedded` repository we cloned earlier.
-
-Although we could edit this file manually, there's a `bitbake-layers` command
-that will help us out. Run the following command to see information about its
-usage:
-
-~~~
-$ bitbake-layers -h
-~~~
-
-From the output of this command, we can see that we want to run the `add-layer`
-sub-command. Run the command shown below, which has been split onto multiple
-lines here for readability:
-
-~~~
-$ bitbake-layers add-layer \
-	/portable/yocto/dunfell/meta-openembedded/meta-oe \
- 	/portable/yocto/dunfell/meta-openembedded/meta-multimedia \
- 	/portable/yocto/dunfell/meta-openembedded/meta-networking \
- 	/portable/yocto/dunfell/meta-openembedded/meta-python \
- 	/portable/yocto/dunfell/meta-raspberrypi 
-~~~
-
-Be sure to use full paths here. Bitbake may support otherwise nowadays, but
-I personally prefer to stick with full paths lest I forget any important caveats.
-
-After this command completes, note that the `bblayers.conf` file has been updated.
-Below is a sample of what you'll see.
-
-~~~
-# POKY_BBLAYERS_CONF_VERSION is increased each time build/conf/bblayers.conf
-# changes incompatibly
-POKY_BBLAYERS_CONF_VERSION = "2"
-
-BBPATH = "${TOPDIR}"
-BBFILES ?= ""
-
-BBLAYERS ?= " \
-  /portable/yocto/dunfell/poky/meta \
-  /portable/yocto/dunfell/poky/meta-poky \
-  /portable/yocto/dunfell/poky/meta-yocto-bsp \
-  /portable/yocto/dunfell/meta-openembedded/meta-oe \
-  /portable/yocto/dunfell/meta-openembedded/meta-multimedia \
-  /portable/yocto/dunfell/meta-openembedded/meta-networking \
-  /portable/yocto/dunfell/meta-openembedded/meta-python \
-  /portable/yocto/dunfell/meta-raspberrypi \
-  "
-~~~
 
 # Build core-image-minimal #
 
@@ -333,7 +348,7 @@ provides a minimalist base that other image recipes can build atop of.)
  $ bitbake core-image-minimal
 ~~~
 
-A word of warning -- if you're a ZFS user on a 20.04 LTS, you'll run into an error like this.  Remember when I said to use something like EXT4? This is why.
+Another word of warning -- if you're a ZFS user on a 20.04 LTS, you'll run into an error like this.  Remember when I said to use something like EXT4? This is why.
 
 ~~~
 | bmaptool: ERROR: cannot generate bmap for file 'core-image-minimal-raspberrypi3-20210604145240.rootfs.wic': the file-system does not support "SEEK_HOLE" and "SEEK_DATA" but only provides a stub implementation
