@@ -42,8 +42,8 @@ name that you are unfamiliar with.
 
 The follow white paper, written by yours truly, may also be
 of interest to you once you start to get your bearings. It's now
-super outdated (which I hope to address eventually), but some of
-the higher-level ideas and intentions st
+super outdated (which I hope to address eventually), but a lot
+of the higher level "what & why" is still applicable.
 
 [Improving Your Embedded Linux Security Posture with Yocto]
 
