@@ -18,7 +18,7 @@
 If you're looking to build Linux-based firmware for embedded platforms, Yocto
 is a good option for you. 
 
-If you're looking to create automated, reproducible, and version-controlled 
+If you're looking to create automated, repeatable, and version-controlled 
 firmware builds with excellent traceability, change tracking, license auditing,
 configurable QA tests, and support for tons of software... Yocto is a great option for you!
 
