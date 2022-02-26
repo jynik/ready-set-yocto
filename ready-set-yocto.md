@@ -18,7 +18,7 @@
 If you're looking to build Linux-based firmware for embedded platforms, Yocto
 is a good option for you. 
 
-If you're looking to create automated, repeatable, and version-controlled 
+If you're looking to create automated, repeatable, version-controlled 
 firmware builds with excellent traceability, change tracking, license auditing,
 configurable QA tests, and support for tons of software... Yocto is a great option for you!
 
@@ -377,18 +377,29 @@ Below is an example directory listing, with some irrelevant items removed.
 
 ~~~
 $ ls tmp/deploy/images/raspberrypi3/core-image-minimal*
-tmp/deploy/images/raspberrypi3/core-image-minimal-raspberrypi3-20210604043230.rootfs.ext3
-tmp/deploy/images/raspberrypi3/core-image-minimal-raspberrypi3-20210604043230.rootfs.tar.bz2
-tmp/deploy/images/raspberrypi3/core-image-minimal-raspberrypi3-20210604043230.rootfs.wic
-tmp/deploy/images/raspberrypi3/core-image-minimal-raspberrypi3-20210604043230.rootfs.wic.bmap
-tmp/deploy/images/raspberrypi3/core-image-minimal-raspberrypi3-20210604043230.rootfs.wic.bz2
+tmp/deploy/images/raspberrypi3/core-image-minimal.env
+tmp/deploy/images/raspberrypi3/core-image-minimal-raspberrypi3-20220225233439.rootfs.ext3
+tmp/deploy/images/raspberrypi3/core-image-minimal-raspberrypi3-20220225233439.rootfs.manifest
+tmp/deploy/images/raspberrypi3/core-image-minimal-raspberrypi3-20220225233439.rootfs.tar.bz2
+tmp/deploy/images/raspberrypi3/core-image-minimal-raspberrypi3-20220225233439.rootfs.wic.bmap
+tmp/deploy/images/raspberrypi3/core-image-minimal-raspberrypi3-20220225233439.rootfs.wic.bz2
+tmp/deploy/images/raspberrypi3/core-image-minimal-raspberrypi3-20220225233439.testdata.json
 tmp/deploy/images/raspberrypi3/core-image-minimal-raspberrypi3.ext3
+tmp/deploy/images/raspberrypi3/core-image-minimal-raspberrypi3.manifest
 tmp/deploy/images/raspberrypi3/core-image-minimal-raspberrypi3.tar.bz2
+tmp/deploy/images/raspberrypi3/core-image-minimal-raspberrypi3.testdata.json
 tmp/deploy/images/raspberrypi3/core-image-minimal-raspberrypi3.wic.bmap
 tmp/deploy/images/raspberrypi3/core-image-minimal-raspberrypi3.wic.bz2
 ~~~
 
 ## What am I looking at here?
+
+Simply put, these are your build artifacts and information about them including:
+
+* `.manifest` - Included Recipes
+* `.env` - The build environment used during the process
+* `.testdata.json` - [Test suite](https://docs.yoctoproject.org/3.1.14/dev-manual/dev-manual-common-tasks.html?highlight=testdata#exporting-tests) metadata
+* `.ext3`, `.tar.bz2`, `.wic.bmap` + `wic.bz2`: Our file system images
 
 In order to define what types of root filesystems image we want -- as well ready-to-flash composite images 
 containing a bootloader, kernel, and filesystems -- we the [IMAGE_FSTYPES]. As you see [here](https://docs.yoctoproject.org/3.1.8/singleindex.html#term-IMAGE_TYPES),
@@ -402,29 +413,23 @@ would like to expirament with creating say,
 [IMAGE_FSTYPES]: <https://docs.yoctoproject.org/3.1.8/singleindex.html#term-IMAGE_FSTYPES>
 [early default assignment]: <https://github.com/agherzan/meta-raspberrypi/blob/dunfell/conf/machine/include/rpi-base.inc#L8>
 
-##  So what's this `.wic` file?
+The `.wic` items may look new to you. These are (multi-partitioned) images creeted by the [Wic tool](https://docs.yoctoproject.org/3.1.8/singleindex.html#creating-partitioned-images-using-wic).
 
-The [Wic tool] creates partitioned images from various build artifacts.
+# Copy core-image-minimal to an SD card
 
-[Wic tool]: <https://docs.yoctoproject.org/3.1.8/singleindex.html#creating-partitioned-images-using-wic>
+Yeah, `dd` is cool, but have you ever used [bmaptool](https://github.com/intel/bmap-tools)? This uses
+the `.wic.bmap` metadata file to determine where to write blocks of source image data (stored in the corresponding
+`.wic.bz2` file). This will generally be quicker than `dd` and friends, as it will skip writes of "empty" regions
+in the source image. You can find some additional information [here](https://docs.yoctoproject.org/3.1.8/singleindex.html#openembedded-kickstart-wks-reference).
 
+Insert an SD card and take note of which block device it is (e.g. `/dev/sdX`).
+If you have volume automount enabled, be sure to `umount` any SD card partitions.
 
-# Copy core-image-minimal to an SD card #
-
-TODO: Talk about [bmaptool](https://github.com/intel/bmap-tools)
-
-[bmaptool](https://www.yoctoproject.org/docs/2.3/dev-manual/dev-manual.html#flashing-images-using-bmaptool)
-
-When the build completes, an image that's ready to be dd'd to an SD card will
-be in `./tmp/deploy/images`. (That's a directory named `tmp` within your build directory, **not** `/tmp`.)
-
-Insert an SD card and write the SD card image to it, replacing `sdX` with the
-appropriate block device. 
-
+Now you can write the image to your SD card. 
 *Take care not to clobber data on the wrong drive due to a typo at this point!*
 
 ~~~
-sudo bmaptool copy tmp/deploy/images/raspberrypi3/core-image-minimal-raspberrypi3.wic.bz2 /dev/sdc
+$ sudo bmaptool copy tmp/deploy/images/raspberrypi3/core-image-minimal-raspberrypi3.wic.bz2 /dev/sdc
 bmaptool: info: discovered bmap file 'tmp/deploy/images/raspberrypi3/core-image-minimal-raspberrypi3.wic.bmap'
 bmaptool: info: block map format version 2.0
 bmaptool: info: 19546 blocks of size 4096 (76.3 MiB), mapped 8623 blocks (33.7 MiB or 44.1%)
@@ -434,10 +439,8 @@ bmaptool: info: synchronizing '/dev/sdc'
 bmaptool: info: copying time: 4.9s, copying speed 6.8 MiB/sec
 ~~~
 
-
-If you receive the following error, you likely have one or more filesystems
-(auto)mounted on the block device. You'll first need to unmount them before
-running bmaptool.
+If you receive the following error, you likely forgot to unmount one or more
+file systems (auto)mounted on the block device. 
 
 ~~~
 bmaptool: ERROR: An error occurred, here is the traceback:
@@ -445,7 +448,7 @@ Traceback (most recent call last):
   File "/usr/lib/python3/dist-packages/bmaptools/CLI.py", line 116, in open_block_device
     descriptor = os.open(path, os.O_WRONLY | os.O_EXCL)
 
-bmaptool: ERROR: cannot open block device '/dev/sdc' in exclusive mode: [Errno 16] Device or resource busy: '/dev/sd
+bmaptool: ERROR: cannot open block device '/dev/sdc' in exclusive mode: [Errno 16] Device or resource busy: '/dev/sdc'
 ~~~
 
 # Boot core-image-minimal #
@@ -465,7 +468,7 @@ Via the UART, you should see boot text and then a login prompt akin to the
 following:
 
 ~~~
- Poky (Yocto Project Reference Distro) 3.1 raspberrypi3 /dev/ttyS0
+ Poky (Yocto Project Reference Distro) 3.1.14 raspberrypi3 /dev/ttyS0
 
  raspberrypi3 login: 
 ~~~
@@ -585,7 +588,7 @@ files that contain just a handful of `CONFIG_FEATURE_X=y` entries. For recipes
 designed to handle this this KConfig-like convention, we can simply use our bbappend
 to introduce a `.cfg` file that modifies our desired configuration tweak.
 
-*(Another quick aside...*)
+*(Another quick aside...)*
 
 We won't talk about it here, and don't get bogged down by it, but know that
 when using bbappend to tweak recipes (most of which don't use config fragments)
