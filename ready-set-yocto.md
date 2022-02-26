@@ -658,13 +658,13 @@ FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 SRC_URI_append := " file://xz.cfg"
 ~~~
 
-By setting the [FILESEXTRAPATHS] variable, we're instructing the OpenEmbedded build 
-system to look inside the directory in which our bbappend file resides ([THISDIR]), 
-in a a subdirectory with the same name as our recipe, busybox. (See: [PN])
+By setting the [`FILESEXTRAPATHS`] variable, we're instructing the OpenEmbedded build 
+system to look inside the directory in which our bbappend file resides ([`THISDIR`]), 
+in a a subdirectory with the same name as our recipe, busybox. (See: [`PN`])
 
-[FILESEXTRAPATHS]: <https://docs.yoctoproject.org/3.1.14/singleindex.html#term-FILESEXTRAPATHS>
-[THISDIR]: <https://docs.yoctoproject.org/3.1.14/singleindex.html#term-THISDIR>
-[PN]: <https://docs.yoctoproject.org/3.1.14/singleindex.html#term-PN>
+[`FILESEXTRAPATHS`]: <https://docs.yoctoproject.org/3.1.14/singleindex.html#term-FILESEXTRAPATHS>
+[`THISDIR`]: <https://docs.yoctoproject.org/3.1.14/singleindex.html#term-THISDIR>
+[`PN`]: <https://docs.yoctoproject.org/3.1.14/singleindex.html#term-PN>
 
 That's it, as far as the *bbappend* goes. The last thing to do is enable our new layer, since we haven't done that yet.
 
@@ -714,9 +714,10 @@ I'll leave it to you to look those up in the reference manual.
 There's definitely quite a learning curve here, but I've found that the best way to tackle it is to
 just explore existing recipes, along with the implementation of the Yocto and OpenEmbedded components themselves.
 
-If you run into strange errors, always start by checking for variable name typos. Those will getcha! If you find yourself questioning your sanity, `bitbake -e` is your friend. I'll let you look that one up too.
+If you run into strange errors, always start by checking for variable name typos. Those will getcha! If you find 
+yourself questioning your sanity, `bitbake -e` is your friend. I'll let you look that one up too.
 
 <br>
-*Good luck and happy hacking!*
+Good luck and happy hacking!
 
 *- jynik*
