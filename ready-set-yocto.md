@@ -503,12 +503,13 @@ deployment in the firmware image. However, everything you've already built
 (that doesn't require rebuilding due to a configuration change) remains
 cached -- each successive build you do will generally require far less time.
 
-When that's done, look for the `core-image-base-raspberrypi3.rpi-sdimg` in
-`./tmp/deploy/images/raspberrypi3/` .
+When that's done, look for the `core-image-base-raspberrypi3.wic.bz2` image in
+`./tmp/deploy/images/raspberrypi3/`.
 
 Copy this to an SD card as you did earlier and boot it.  Run `lsmod` again and
-observe that a whole slew of drivers have now been included in the image. Note 
-that the HDMI interface is operational, along with WLAN and BlueTooth interfaces.
+observe that a whole slew of drivers have now been included in the image. 
+
+Note that (the relevant) additional interfaces are now active. (e.g. HDMI, Wi-Fi, Bluetooth)
 
 # Creating your own layer #
 
@@ -518,23 +519,25 @@ layer is the right place to begin introducing those changes.
 
 As a general rule of thumb, you shouldn't be modifying the contents of other
 layers, provided that they are maintained reasonably well. Even in the cases
-when they aren't, there are often features (like [BBMASK](https://www.yoctoproject.org/docs/3.1/mega-manual/mega-manual.html#var-BBMASK)) that you can use to deal with undesired behavior from
+when they aren't, there are often features (like [BBMASK](https://docs.yoctoproject.org/3.1.14/ref-manual/ref-variables.html?highlight=bbmask#term-BBMASK)) that you can use to deal with undesired behavior from
 other layers, without needing to worry about maintaining a fork of the
 problematic layer.
 
-Let's start with an overkill, but simple example, just to go through the
-process of creating a new layer. Let's say you've added some initscripts to an
-image, and after some debugging you've realized that BusyBox isn't configured
-with a particular command or argument that you need. 
+Let's start with an overkill, but simple, example just to go through the
+process of [creating a new layer](https://docs.yoctoproject.org/3.1.14/dev-manual/dev-manual-common-tasks.html#understanding-and-creating-layers): 
+
+Let's say you've added some initscripts to an image. After some debugging 
+you've realized that BusyBox isn't configured with a particular command or
+argument that you need. 
 
 For example, try to run the commands "xz" and "unxz" from your shell on the
 Raspberry Pi and observe that they're not present on the system. (At the time of
 writing, these file compression Busybox "applets" are not enabled by default.)
 So, we'll enable these!
 
-Copying entire recipes into your layer is considered a [poor practice](https://www.yoctoproject.org/docs/3.1/mega-manual/mega-manual.html#best-practices-to-follow-when-creating-layers). Instead,
+Copying entire recipes into your layer is considered a [poor practice](https://docs.yoctoproject.org/3.1.14/dev-manual/dev-manual-common-tasks.html#following-best-practices-when-creating-layers). Instead,
 the Yocto and OpenEmbedded communities prefer the use of a
-"[*bbappend*](https://www.yoctoproject.org/docs/3.1/mega-manual/mega-manual.html#using-bbappend-files)"
+"[*bbappend*](https://docs.yoctoproject.org/3.1.14/dev-manual/dev-manual-common-tasks.html#using-bbappend-files-in-your-layer)"
 file, which will effectively let you *append* to the definition of a recipe
 found elsewhere. This allows you modify or redefine variable definitions, as
 well as make changes to the way software is fetched, compiled, "installed", and
@@ -552,39 +555,36 @@ Let's name our layer "meta-mypi":
 $ bitbake-layers create-layer /portable/yocto/dunfell/meta-mypi
 ~~~
 
-When done, you should now have a  /portable/yocto/dunfell/meta-mypi directory,
+When done, you should now have a `/portable/yocto/dunfell/meta-mypi` directory,
 complete with a conf/ directory, an MIT license, a boilerplate README, and
 an example recipe that we won't concern ourselves with here.
-
-For more info about creating layers, see [this section in the Yocto Project Development Tasks Manual](https://www.yoctoproject.org/docs/3.1/mega-manual/mega-manual.html#understanding-and-creating-layers).
 
 # Creating a bbappend file for BusyBox #
 
 ## First, a bit of background ##
 
-Recipes are stored in files with a .bb extension.
+Recipes are stored in files with a `.bb` extension.
 
 If we want to add "stuff" or otherwise override definitions in an existing
-recipe, we can do so by creating a corresponding .bbappend file in our own layer.
+recipe, we can do so by creating a corresponding `.bbappend` file in our own layer.
 
-A .bbappend file must have the same name as its .bb counterpart, and as a
+A `.bbappend` file must have the same name as its `.bb` counterpart. As a
 matter of best practice, should be located in the same relative path within the
 layer.
 
-The BusyBox recipe is found in [`poky/meta/recipes-core/busybox/busybox_1.31.0.bb`](https://git.yoctoproject.org/cgit/cgit.cgi/poky/tree/meta/recipes-core/busybox/busybox_1.31.0.bb?h=zeus). 
+The BusyBox recipe is found in [`poky/meta/recipes-core/busybox/busybox_1.31.01.bb`](https://git.yoctoproject.org/poky/tree/meta/recipes-core/busybox/busybox_1.31.1.bb?h=dunfell). 
 (The exact version string may have change since this tutorial was last updated.)
 
-Note that this bitbake recipe includes the [`busybox.inc`](https://git.yoctoproject.org/cgit/cgit.cgi/poky/tree/meta/recipes-core/busybox/busybox.inc?h=zeus) file (via a `require` directive),
+Note that this bitbake recipe includes the [`busybox.inc`](https://git.yoctoproject.org/poky/tree/meta/recipes-core/busybox/busybox.inc?h=dunfell) file (via the `require` directive),
 where most of the work of the recipe is actually implemented. 
 
-The [`poky/meta/recipes-core/busybox/busybox`](https://git.yoctoproject.org/cgit/cgit.cgi/poky/tree/meta/recipes-core/busybox/busybox?h=zeus) directory contains patches, "configuration
-fragments", while [`poky/meta/recipes-core/busybox/files`](https://git.yoctoproject.org/cgit/cgit.cgi/poky/tree/meta/recipes-core/busybox/files?h=zeus) contains items to deploy within the target filesystem image. You'll see these referenced via "file://" in the recipe's [`SRC_URI`](https://www.yoctoproject.org/docs/3.1/mega-manual/mega-manual.html#var-SRC_URI) definition.
+The [`poky/meta/recipes-core/busybox/busybox`](https://git.yoctoproject.org/poky/tree/meta/recipes-core/busybox/busybox?h=dunfell) 
+directory contains patches, "configuration fragments", while [`poky/meta/recipes-core/busybox/files`](https://git.yoctoproject.org/cgit/cgit.cgi/poky/tree/meta/recipes-core/busybox/files?h=zeus) contains items to deploy within the target filesystem image. You'll see these referenced via "file://" in the recipe's [`SRC_URI`](https://www.yoctoproject.org/docs/3.1/mega-manual/mega-manual.html#var-SRC_URI) definition.
 
-The term "[configuration
-fragments](https://www.yoctoproject.org/docs/3.1/mega-manual/mega-manual.html#creating-config-fragments)"
+The term "[configuration fragments](https://docs.yoctoproject.org/3.1.14/kernel-dev/kernel-dev-common.html#creating-configuration-fragments)"
 is most often used with respect to Linux kernel configuration, but applies to
 the KConfig-esque configuration of BusyBox as well. Basically, these are `.cfg`
-files that contain just a handful of `CONFIG_FEATURE_X=y` entries. For recipes
+files that contain just a handful of `CONFIG_FEATURE_<X>=y` entries. For recipes
 designed to handle this this KConfig-like convention, we can simply use our bbappend
 to introduce a `.cfg` file that modifies our desired configuration tweak.
 
@@ -596,7 +596,7 @@ you may find yourself needing to add a little extra bit of shell or Python code
 in a function within a recipe.  Keep an eye out (i.e. grep around layers) for
 recipes and bbappend files defining functions named `do_configure_append()` or
 `do_configure_prepend()` to see examples of this. The Bitbake manual section
-about [Functions](https://www.yoctoproject.org/docs/3.1/mega-manual/mega-manual.html#functions)
+about [Functions](https://docs.yoctoproject.org/bitbake/1.46/bitbake-user-manual/bitbake-user-manual-metadata.html#functions)
 explains what's going on with this syntax.
 
 ## Identifying what we want to change ##
@@ -608,10 +608,9 @@ Busybox binary we've already built.
 
 To do this, we can do a few things, including:
 
-1. Inspect the [`poky/meta/recipes-core/busybox/busybox/defconfig`](https://git.yoctoproject.org/cgit/cgit.cgi/poky/tree/meta/recipes-core/busybox/busybox/defconfig?h=zeus) file, which
-    gets combined with configuration fragments at build time.
+1. Inspect the [`poky/meta/recipes-core/busybox/busybox/defconfig`](https://git.yoctoproject.org/cgit/cgit.cgi/poky/tree/meta/recipes-core/busybox/busybox/defconfig?h=dunfell)file, which gets combined with configuration fragments at build time.
 
-2. Look at the actual .config file that was used to configure the build that has already happened.
+2. Look at the actual `.config` file that was used to configure the build that has already happened.
 
 
 For the sake of learning more about bitbake, let's do number 2. Run the following command.
@@ -648,22 +647,28 @@ Next, lets create our actual bbappend file. Create the following file, again adj
 slightly if the busybox version has changed since the time of writing.
 
 ~~~
-/portable/yocto/dunfell/meta-mypi/recipes-core/busybox/busybox_1.31.0.bbappend
+/portable/yocto/dunfell/meta-mypi/recipes-core/busybox/busybox_1.31.1.bbappend
 ~~~
 
 You only need to put two lines in this file. Ensure you include the leading
 whitespace in the string on the second line.
 
 ~~~
-FILESEXTRSPATHS_prepend := "${THISDIR}/${PN}:"
+FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 SRC_URI_append := " file://xz.cfg"
 ~~~
 
-By setting the [`FILESEXTRASPATHS`](https://www.yoctoproject.org/docs/3.1/mega-manual/mega-manual.html#var-FILESEXTRAPATHS) variable, we're instructing the OpenEmbedded build system to look inside the directory in which our bbappend file resides (`${THISDIR}`), in a a subdirectory with the same name as our recipe, busybox. (Refer to the [glossary, regarding `${PN}`](https://www.yoctoproject.org/docs/3.1/mega-manual/mega-manual.html#var-PN)).
+By setting the [FILESEXTRAPATHS] variable, we're instructing the OpenEmbedded build 
+system to look inside the directory in which our bbappend file resides ([THISDIR]), 
+in a a subdirectory with the same name as our recipe, busybox. (See: [PN])
 
-That's it, as far as the bbappend goes. The last thing to do is enable our new layer, since we haven't done that yet.
+[FILESEXTRAPATHS]: <https://docs.yoctoproject.org/3.1.14/singleindex.html#term-FILESEXTRAPATHS>
+[THISDIR]: <https://docs.yoctoproject.org/3.1.14/singleindex.html#term-THISDIR>
+[PN]: <https://docs.yoctoproject.org/3.1.14/singleindex.html#term-PN>
 
-One final note - it would be incredibly annoying if you had to create a new bbappend file for every patch, or even minor, revision bump to a piece of software. As noted [here](https://www.yoctoproject.org/docs/3.1/mega-manual/mega-manual.html#append-bbappend-files), you can actually use a "%" wildcard in the version portion of a recipe filename to match multiple version. We could have named our file, `busybox_1.31.%.bbappend`, for example, to match all versions in teh 1.31.x series.
+That's it, as far as the *bbappend* goes. The last thing to do is enable our new layer, since we haven't done that yet.
+
+One final note - it would be incredibly annoying if you had to create a new bbappend file for every patch version bump to a piece of software. As noted [here](https://docs.yoctoproject.org/bitbake/bitbake-user-manual/bitbake-user-manual-intro.html#append-files), you can actually use a "%" wildcard in the version portion of a recipe filename to match multiple version. We could have named our file, `busybox_1.31.%.bbappend`, for example, to match all versions in the 1.31.x series.
 
 ## Enable our layer ##
 
@@ -681,8 +686,8 @@ $ bitbake -c cleansstate busybox
 $ bitbake core-image-base
 ~~~
 
-Technically, that first command isn't necessary -- bitbake will detect the change and will
-identify all the `core-image-base` dependencies that require rebuilding. It's quite smart like that.
+Technically, that first command isn't necessary -- bitbake should detect the change and will
+identify which `core-image-base` dependencies that require rebuilding. It's quite smart like that.
 
 However, I like to be explicit, just for my own sanity.  *Plus, this gave me the chance to note how to
 fully "clean" up the state of a recipe build, without having to have it
@@ -692,9 +697,8 @@ it will clean up compilation, but not configuration, artifacts.*
 
 When this completes, run `bitbake devshell busybox` again and confirm that the `.config`
 file has indeed been updated to reflect our changes. Then write the newly regenerated 
-`core-image-base-raspberrypi3.rpi-sdimg` to an SD card, boot it, and observe that you can now
+`core-image-base-raspberrypi3.wic.bz2` iamge to an SD card, boot it, and observe that you can now
 use the "xz" and "unxz" commands in all their glory.
-
 
 # Final words #
 
