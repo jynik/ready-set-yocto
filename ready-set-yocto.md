@@ -2,7 +2,7 @@
 
 ***A short, unofficial guide on getting started with Yocto Release 3.1 ("Dunfell") with a Raspberry Pi***
 
-**Release**: 3.1 "Dunfell"
+**Release**: 3.1.14 "Dunfell" - LTS Support: [Apr 2020 - Apr 2024](https://wiki.yoctoproject.org/wiki/Releases)
 
 **Author**: Jon Szymaniak ([jynik] / [@sz_jynik])
 
