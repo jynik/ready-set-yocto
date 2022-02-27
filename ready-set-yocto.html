@@ -34,7 +34,7 @@ name that you are unfamiliar with.</p>
 <ul>
   <li><a href="https://docs.yoctoproject.org/3.1.14/brief-yoctoprojectqs/brief-yoctoprojectqs.html">Yocto Project Quick Build</a></li>
   <li><a href="https://docs.yoctoproject.org/bitbake/1.46/">Bitbake User Manual</a></li>
-  <li><a href="https://docs.yoctoproject.org/3.1.14/">Yocto Mega-Manual</a></li>
+  <li><a href="https://docs.yoctoproject.org/3.1.14/singleindex.html">Yocto Mega-Manual</a></li>
 </ul>
 
 <h2 id="shameless-plug">Shameless Plug</h2>
@@ -264,7 +264,7 @@ operates it in 32-bit mode.</p>
 <p>If you look at the content in these machine configuration files, you’ll find that
 there’s not a whole lot in there. This is because a majority of the “common stuff”
 is all tucked away in files that are included (<em>think #include in C/C++</em>) via the
-<a href="https://www.yoctoproject.org/docs/3.1/bitbake-user-manual/bitbake-user-manual.html#include-directive"><code>include</code></a> and <a href="https://www.yoctoproject.org/docs/3.1/bitbake-user-manual/bitbake-user-manual.html#require-inclusion"><code>required</code></a> directives.</p>
+<a href="https://www.yoctoproject.org/docs/3.1/bitbake-user-manual/bitbake-user-manual.html#include-directive"><code>include</code></a> and <a href="https://www.yoctoproject.org/docs/3.1/bitbake-user-manual/bitbake-user-manual.html#require-inclusion"><code>require</code></a> directives.</p>
 
 <p>Thus, the machine configuration files only override or expand upon variable definitions as-needed to do things like…</p>
 
@@ -558,7 +558,7 @@ recipe, we can do so by creating a corresponding <code>.bbappend</code> file in 
 matter of best practice, should be located in the same relative path within the
 layer.</p>
 
-<p>The BusyBox recipe is found in <a href="https://git.yoctoproject.org/poky/tree/meta/recipes-core/busybox/busybox_1.31.1.bb?h=dunfell"><code>poky/meta/recipes-core/busybox/busybox_1.31.01.bb</code></a>. 
+<p>The BusyBox recipe is found in <a href="https://git.yoctoproject.org/poky/tree/meta/recipes-core/busybox/busybox_1.31.1.bb?h=dunfell"><code>poky/meta/recipes-core/busybox/busybox_1.31.1.bb</code></a>. 
 (The exact version string may have change since this tutorial was last updated.)</p>
 
 <p>Note that this bitbake recipe includes the <a href="https://git.yoctoproject.org/poky/tree/meta/recipes-core/busybox/busybox.inc?h=dunfell"><code>busybox.inc</code></a> file (via the <code>require</code> directive),
