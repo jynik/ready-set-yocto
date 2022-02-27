@@ -63,7 +63,7 @@ comparisons of all three projects [here](https://www.yoctoproject.org/learn-item
 
 [Bitbake User Manual]: https://docs.yoctoproject.org/bitbake/1.46/
 
-[Yocto Mega-Manual]: https://docs.yoctoproject.org/3.1.14/
+[Yocto Mega-Manual]: https://docs.yoctoproject.org/3.1.14/singleindex.html
 
 [OpenEmbedded]: https://www.openembedded.org/wiki/Main_Page
 
@@ -266,7 +266,7 @@ operates it in 32-bit mode.
 If you look at the content in these machine configuration files, you'll find that
 there's not a whole lot in there. This is because a majority of the "common stuff"
 is all tucked away in files that are included (*think #include in C/C++*) via the
-[`include`](https://www.yoctoproject.org/docs/3.1/bitbake-user-manual/bitbake-user-manual.html#include-directive) and [`required`](https://www.yoctoproject.org/docs/3.1/bitbake-user-manual/bitbake-user-manual.html#require-inclusion) directives.
+[`include`](https://www.yoctoproject.org/docs/3.1/bitbake-user-manual/bitbake-user-manual.html#include-directive) and [`require`](https://www.yoctoproject.org/docs/3.1/bitbake-user-manual/bitbake-user-manual.html#require-inclusion) directives.
 
 Thus, the machine configuration files only override or expand upon variable definitions as-needed to do things like...
 
@@ -572,7 +572,7 @@ A `.bbappend` file must have the same name as its `.bb` counterpart. As a
 matter of best practice, should be located in the same relative path within the
 layer.
 
-The BusyBox recipe is found in [`poky/meta/recipes-core/busybox/busybox_1.31.01.bb`](https://git.yoctoproject.org/poky/tree/meta/recipes-core/busybox/busybox_1.31.1.bb?h=dunfell). 
+The BusyBox recipe is found in [`poky/meta/recipes-core/busybox/busybox_1.31.1.bb`](https://git.yoctoproject.org/poky/tree/meta/recipes-core/busybox/busybox_1.31.1.bb?h=dunfell). 
 (The exact version string may have change since this tutorial was last updated.)
 
 Note that this bitbake recipe includes the [`busybox.inc`](https://git.yoctoproject.org/poky/tree/meta/recipes-core/busybox/busybox.inc?h=dunfell) file (via the `require` directive),
@@ -608,7 +608,7 @@ Busybox binary we've already built.
 
 To do this, we can do a few things, including:
 
-1. Inspect the [`poky/meta/recipes-core/busybox/busybox/defconfig`](https://git.yoctoproject.org/cgit/cgit.cgi/poky/tree/meta/recipes-core/busybox/busybox/defconfig?h=dunfell)file, which gets combined with configuration fragments at build time.
+1. Inspect the [`poky/meta/recipes-core/busybox/busybox/defconfig`](https://git.yoctoproject.org/cgit/cgit.cgi/poky/tree/meta/recipes-core/busybox/busybox/defconfig?h=dunfell) file, which gets combined with configuration fragments at build time.
 
 2. Look at the actual `.config` file that was used to configure the build that has already happened.
 
