@@ -584,7 +584,7 @@ directory contains patches, "configuration fragments", while [`poky/meta/recipes
 contains items to deploy within the target filesystem image. You'll see these referenced 
 via "file://" in the recipe's [`SRC_URI`](https://docs.yoctoproject.org/singleindex.html) definition.
 
-The term "[configuration fragments](https://docs.yoctoproject.org/kernel-dev/kernel-dev-common.html#creating-configuration-fragments)"
+The term "[configuration fragments](https://docs.yoctoproject.org/kernel-dev/common.html#creating-configuration-fragments)"
 is most often used with respect to Linux kernel configuration, but applies to
 the KConfig-esque configuration of BusyBox as well. Basically, these are `.cfg`
 files that contain just a handful of `CONFIG_FEATURE_<X>=y` entries. For recipes
