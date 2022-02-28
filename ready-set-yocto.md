@@ -1,6 +1,6 @@
 # Ready, Set, Yocto! #
 
-***A short, unofficial guide on getting started with Yocto Release 3.1 ("Dunfell") with a Raspberry Pi***
+***A short, unofficial guide on getting started with Yocto with a Raspberry Pi***
 
 **Release**: 3.5 "Kirkstone" - LTS Support: [Apr 2022 - Apr 2024](https://wiki.yoctoproject.org/wiki/Releases)
 
@@ -59,11 +59,11 @@ If you ultimately find that you're having a lot of trouble or just don't like so
 about Yocto/OpenEmbedded, consider kicking the tires on BuildRoot. You can find
 comparisons of all three projects [here](https://www.yoctoproject.org/learn-items/elc-2016-buildroot-vs-yocto-projectopenembedded-alexandre-belloni/).
 
-[Yocto Project Quick Build]: https://docs.yoctoproject.org/3.5/brief-yoctoprojectqs/brief-yoctoprojectqs.html
+[Yocto Project Quick Build]: https://docs.yoctoproject.org/brief-yoctoprojectqs/index.html 
 
 [Bitbake User Manual]: https://docs.yoctoproject.org/bitbake/1.46/
 
-[Yocto Mega-Manual]: https://docs.yoctoproject.org/3.5/
+[Yocto Mega-Manual]: https://docs.yoctoproject.org/singleindex.html
 
 [OpenEmbedded]: https://www.openembedded.org/wiki/Main_Page
 
@@ -266,7 +266,7 @@ operates it in 32-bit mode.
 If you look at the content in these machine configuration files, you'll find that
 there's not a whole lot in there. This is because a majority of the "common stuff"
 is all tucked away in files that are included (*think #include in C/C++*) via the
-[`include`](https://www.yoctoproject.org/bitbake-user-manual/bitbake-user-manual.html#include-directive)
+[`include`](https://docs.yoctoproject.org/bitbake/bitbake-user-manual/bitbake-user-manual-metadata.html#include-directive)
 and [`required`](https://docs.yoctoproject.org/bitbake/bitbake-user-manual/bitbake-user-manual-metadata.html#require-directive) directives.
 
 Thus, the machine configuration files only override or expand upon variable definitions as-needed to do things like...
@@ -302,7 +302,7 @@ to re-download items I already have. This is purely a matter of preference.
 ## Raspberry Pi-Specific Configurations ##
 
 Before we're done editing the `local.conf` file, take a quick skim through the
-`meta-raspberrypi` layer's [`docs/extra-build-config.md`](https://git.yoctoproject.org/cgit/cgit.cgi/meta-raspberrypi/tree/docs/extra-build-config.md?h=kirkstone) file. 
+`meta-raspberrypi` layer's [`docs/extra-build-config.md`](https://git.yoctoproject.org/cgit/cgit.cgi/meta-raspberrypi/tree/docs/extra-build-config.md) file. 
 
 This describes a variety of `local.conf` definitions that you can use to
 enable/disable/modify what ultimately gets written to the `config.txt` file
@@ -318,7 +318,7 @@ project really shines.
 
 If you plan on distributing your custom firmware build setup to other people
 (and especially if you are responsible for maintaining the firmware build process for your
-product), avoid heavy use of local.conf tweaks. Instead use custom [distro layers](https://docs.yoctoproject.org/3.5/overview-manual/overview-manual-concepts.html#distro-layer), 
+product), avoid heavy use of local.conf tweaks. Instead use custom [distro layers](https://docs.yoctoproject.org/overview-manual/concepts.html#distro-layer), 
 custom machine configuration files, and  "bbappend" files -- we'll learn about those more a bit later.
 That being said -- it's also neighborly to provide a "known good" local.conf file 
 template when creating your own "distro" layer... especially if you have some
@@ -399,11 +399,11 @@ Simply put, these are your build artifacts and information about them including:
 
 * `.manifest` - Included Recipes
 * `.env` - The build environment used during the process
-* `.testdata.json` - [Test suite](https://docs.yoctoproject.org/3.5/dev-manual/dev-manual-common-tasks.html?highlight=testdata#exporting-tests) metadata
+* `.testdata.json` - [Test suite](https://docs.yoctoproject.org/dev-manual/common-tasks.html#performing-automated-runtime-testing) metadata
 * `.ext3`, `.tar.bz2`, `.wic.bmap` + `wic.bz2`: Our file system images
 
 In order to define what types of root filesystems image we want -- as well ready-to-flash composite images 
-containing a bootloader, kernel, and filesystems -- we the [IMAGE_FSTYPES]. As you see [here](https://docs.yoctoproject.org/3.1.8/singleindex.html#term-IMAGE_TYPES),
+containing a bootloader, kernel, and filesystems -- we the [IMAGE_FSTYPES]. As you see [here](https://docs.yoctoproject.org/singleindex.html#term-IMAGE_TYPES),
 there are a lot of available options!
 
 In the case of the *meta-raspberrypi* layer, an include file that defines various properties about
@@ -411,17 +411,17 @@ our target `${MACHINE}` (`raspberrypi3`), contains an "[early default assignment
 resulting in the items shown above.  Note that you can append to IMAGE_FSTYPES in `local.conf` if you
 would like to expirament with creating say, 
 
-[IMAGE_FSTYPES]: <https://docs.yoctoproject.org/3.1.8/singleindex.html#term-IMAGE_FSTYPES>
-[early default assignment]: <https://github.com/agherzan/meta-raspberrypi/blob/kirkstone/conf/machine/include/rpi-base.inc#L8>
+[IMAGE_FSTYPES]: <https://docs.yoctoproject.org/singleindex.html#term-IMAGE_FSTYPES>
+[early default assignment]: <https://github.com/agherzan/meta-raspberrypi/blob/master/conf/machine/include/rpi-base.inc#L8>
 
-The `.wic` items may look new to you. These are (multi-partitioned) images creeted by the [Wic tool](https://docs.yoctoproject.org/3.1.8/singleindex.html#creating-partitioned-images-using-wic).
+The `.wic` items may look new to you. These are (multi-partitioned) images creeted by the [Wic tool](https://docs.yoctoproject.org/singleindex.html#creating-partitioned-images-using-wic).
 
 # Copy core-image-minimal to an SD card
 
 Yeah, `dd` is cool, but have you ever used [bmaptool](https://github.com/intel/bmap-tools)? This uses
 the `.wic.bmap` metadata file to determine where to write blocks of source image data (stored in the corresponding
 `.wic.bz2` file). This will generally be quicker than `dd` and friends, as it will skip writes of "empty" regions
-in the source image. You can find some additional information [here](https://docs.yoctoproject.org/3.1.8/singleindex.html#openembedded-kickstart-wks-reference).
+in the source image. You can find some additional information [here](https://docs.yoctoproject.org/singleindex.html#openembedded-kickstart-wks-reference).
 
 Insert an SD card and take note of which block device it is (e.g. `/dev/sdX`).
 If you have volume automount enabled, be sure to `umount` any SD card partitions.
@@ -520,12 +520,12 @@ layer is the right place to begin introducing those changes.
 
 As a general rule of thumb, you shouldn't be modifying the contents of other
 layers, provided that they are maintained reasonably well. Even in the cases
-when they aren't, there are often features (like [BBMASK](https://docs.yoctoproject.org/3.5/ref-manual/ref-variables.html?highlight=bbmask#term-BBMASK)) that you can use to deal with undesired behavior from
+when they aren't, there are often features (like [BBMASK](https://docs.yoctoproject.org/ref-manual/variables.html?highlight=bbmask#term-BBMASK)) that you can use to deal with undesired behavior from
 other layers, without needing to worry about maintaining a fork of the
 problematic layer.
 
 Let's start with an overkill, but simple, example just to go through the
-process of [creating a new layer](https://docs.yoctoproject.org/3.5/dev-manual/dev-manual-common-tasks.html#understanding-and-creating-layers): 
+process of [creating a new layer](https://docs.yoctoproject.org/dev-manual/dev-manual-common-tasks.html#understanding-and-creating-layers): 
 
 Let's say you've added some initscripts to an image. After some debugging 
 you've realized that BusyBox isn't configured with a particular command or
@@ -536,9 +536,9 @@ Raspberry Pi and observe that they're not present on the system. (At the time of
 writing, these file compression Busybox "applets" are not enabled by default.)
 So, we'll enable these!
 
-Copying entire recipes into your layer is considered a [poor practice](https://docs.yoctoproject.org/3.5/dev-manual/dev-manual-common-tasks.html#following-best-practices-when-creating-layers). Instead,
+Copying entire recipes into your layer is considered a [poor practice](https://docs.yoctoproject.org/dev-manual/common-tasks.html#following-best-practices-when-creating-layers). Instead,
 the Yocto and OpenEmbedded communities prefer the use of a
-"[*bbappend*](https://docs.yoctoproject.org/3.5/dev-manual/dev-manual-common-tasks.html#using-bbappend-files-in-your-layer)"
+"[*bbappend*](https://docs.yoctoproject.org/dev-manual/dev-manual-common-tasks.html#using-bbappend-files-in-your-layer)"
 file, which will effectively let you *append* to the definition of a recipe
 found elsewhere. This allows you modify or redefine variable definitions, as
 well as make changes to the way software is fetched, compiled, "installed", and
@@ -573,16 +573,18 @@ A `.bbappend` file must have the same name as its `.bb` counterpart. As a
 matter of best practice, should be located in the same relative path within the
 layer.
 
-The BusyBox recipe is found in [`poky/meta/recipes-core/busybox/busybox_.bb`](https://git.yoctoproject.org/poky/tree/meta/recipes-core/busybox/busybox_1.31.1.bb?h=kirkstone). 
+The BusyBox recipe is found in [`poky/meta/recipes-core/busybox/busybox_1.35.0.bb`](https://git.yoctoproject.org/poky/tree/meta/recipes-core/busybox/busybox_1.35.0.bb). 
 (The exact version string may have change since this tutorial was last updated.)
 
-Note that this bitbake recipe includes the [`busybox.inc`](https://git.yoctoproject.org/poky/tree/meta/recipes-core/busybox/busybox.inc?h=kirkstone) file (via the `require` directive),
+Note that this bitbake recipe includes the [`busybox.inc`](https://git.yoctoproject.org/poky/tree/meta/recipes-core/busybox/busybox.inc) file (via the `require` directive),
 where most of the work of the recipe is actually implemented. 
 
-The [`poky/meta/recipes-core/busybox/busybox`](https://git.yoctoproject.org/poky/tree/meta/recipes-core/busybox/busybox?h=kirkstone) 
-directory contains patches, "configuration fragments", while [`poky/meta/recipes-core/busybox/files`](https://git.yoctoproject.org/cgit/cgit.cgi/poky/tree/meta/recipes-core/busybox/files?h=zeus) contains items to deploy within the target filesystem image. You'll see these referenced via "file://" in the recipe's [`SRC_URI`](https://www.yoctoproject.org/docs/3.1/mega-manual/mega-manual.html#var-SRC_URI) definition.
+The [`poky/meta/recipes-core/busybox/busybox`](https://git.yoctoproject.org/poky/tree/meta/recipes-core/busybox/busybox) 
+directory contains patches, "configuration fragments", while [`poky/meta/recipes-core/busybox/files`](https://git.yoctoproject.org/poky/tree/meta/recipes-core/busybox/files)
+contains items to deploy within the target filesystem image. You'll see these referenced 
+via "file://" in the recipe's [`SRC_URI`](https://docs.yoctoproject.org/singleindex.html) definition.
 
-The term "[configuration fragments](https://docs.yoctoproject.org/3.5/kernel-dev/kernel-dev-common.html#creating-configuration-fragments)"
+The term "[configuration fragments](https://docs.yoctoproject.org/kernel-dev/kernel-dev-common.html#creating-configuration-fragments)"
 is most often used with respect to Linux kernel configuration, but applies to
 the KConfig-esque configuration of BusyBox as well. Basically, these are `.cfg`
 files that contain just a handful of `CONFIG_FEATURE_<X>=y` entries. For recipes
@@ -609,7 +611,7 @@ Busybox binary we've already built.
 
 To do this, we can do a few things, including:
 
-1. Inspect the [`poky/meta/recipes-core/busybox/busybox/defconfig`](https://git.yoctoproject.org/cgit/cgit.cgi/poky/tree/meta/recipes-core/busybox/busybox/defconfig?h=kirkstone)file, which gets combined with configuration fragments at build time.
+1. Inspect the [`poky/meta/recipes-core/busybox/busybox/defconfig`](https://git.yoctoproject.org/cgit/cgit.cgi/poky/tree/meta/recipes-core/busybox/busybox/defconfig) file, which gets combined with configuration fragments at build time.
 
 2. Look at the actual `.config` file that was used to configure the build that has already happened.
 
@@ -663,9 +665,9 @@ By setting the [`FILESEXTRAPATHS`] variable, we're instructing the OpenEmbedded 
 system to look inside the directory in which our bbappend file resides ([`THISDIR`]), 
 in a a subdirectory with the same name as our recipe, busybox. (See: [`PN`])
 
-[`FILESEXTRAPATHS`]: <https://docs.yoctoproject.org/3.5/singleindex.html#term-FILESEXTRAPATHS>
-[`THISDIR`]: <https://docs.yoctoproject.org/3.5/singleindex.html#term-THISDIR>
-[`PN`]: <https://docs.yoctoproject.org/3.5/singleindex.html#term-PN>
+[`FILESEXTRAPATHS`]: <https://docs.yoctoproject.org/singleindex.html#term-FILESEXTRAPATHS>
+[`THISDIR`]: <https://docs.yoctoproject.org/singleindex.html#term-THISDIR>
+[`PN`]: <https://docs.yoctoproject.org/singleindex.html#term-PN>
 
 That's it, as far as the *bbappend* goes. The last thing to do is enable our new layer, since we haven't done that yet.
 

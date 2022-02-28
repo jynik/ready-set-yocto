@@ -1,8 +1,8 @@
 <h1 id="ready-set-yocto">Ready, Set, Yocto!</h1>
 
-<p><strong><em>A short, unofficial guide on getting started with Yocto Release 3.1 (“Dunfell”) with a Raspberry Pi</em></strong></p>
+<p><strong><em>A short, unofficial guide on getting started with Yocto with a Raspberry Pi</em></strong></p>
 
-<p><strong>Release</strong>: 3.1.14 “Dunfell” - LTS Support: <a href="https://wiki.yoctoproject.org/wiki/Releases">Apr 2020 - Apr 2024</a></p>
+<p><strong>Release</strong>: 3.5 “Kirkstone” - LTS Support: <a href="https://wiki.yoctoproject.org/wiki/Releases">Apr 2022 - Apr 2024</a></p>
 
 <p><strong>Author</strong>: Jon Szymaniak (<a href="https://github.com/jynik">jynik</a> / <a href="https://twitter.com/sz_jynik">@sz_jynik</a>)</p>
 
@@ -32,9 +32,9 @@ to search through (e.g. via “Ctrl-F”) any time you encounter a term or varia
 name that you are unfamiliar with.</p>
 
 <ul>
-  <li><a href="https://docs.yoctoproject.org/3.1.14/brief-yoctoprojectqs/brief-yoctoprojectqs.html">Yocto Project Quick Build</a></li>
+  <li><a href="https://docs.yoctoproject.org/brief-yoctoprojectqs/index.html">Yocto Project Quick Build</a></li>
   <li><a href="https://docs.yoctoproject.org/bitbake/1.46/">Bitbake User Manual</a></li>
-  <li><a href="https://docs.yoctoproject.org/3.1.14/singleindex.html">Yocto Mega-Manual</a></li>
+  <li><a href="https://docs.yoctoproject.org/singleindex.html">Yocto Mega-Manual</a></li>
 </ul>
 
 <h2 id="shameless-plug">Shameless Plug</h2>
@@ -110,7 +110,7 @@ and deviate from those restrictions, you’ll probably run into problems.</p>
   </tbody>
 </table>
 
-<pre><code> $ sudo apt install build-essential chrpath gawk git bmap-tools texinfo diffstat
+<pre><code>$ sudo apt install build-essential chrpath gawk git bmap-tools texinfo diffstat
 </code></pre>
 
 <h1 id="build-system-and-required-layers">Build System and Required Layers</h1>
@@ -121,19 +121,19 @@ and deviate from those restrictions, you’ll probably run into problems.</p>
 <p>Oftentimes I’ll keep multiple Yocto releases on my system, so let’s create 
 a directory for the current version:</p>
 
-<pre><code> $ mkdir -p /portable/yocto/dunfell
- $ cd /portable/yocto/dunfell
+<pre><code> $ mkdir -p /portable/yocto/kirkstone
+ $ cd /portable/yocto/kirkstone
 </code></pre>
 
 <p>Let’s also make some directories we’ll use later:</p>
 
-<pre><code> $ mkdir /portable/yocto/dunfell/builds
- $ mkdir /portable/yocto/dunfell/downloads
+<pre><code> $ mkdir /portable/yocto/kirkstone/builds
+ $ mkdir /portable/yocto/kirkstone/downloads
 </code></pre>
 
-<p>Now lets check out the dunfell branch of “Poky” - Yocto’s Build system:</p>
+<p>Now lets check out the kirkstone branch of “Poky” - Yocto’s Build system:</p>
 
-<pre><code> $ git clone -b dunfell git://git.yoctoproject.org/poky.git
+<pre><code> $ git clone -b kirkstone git://git.yoctoproject.org/poky.git
 </code></pre>
 
 <p>The bitbake tool used by Yocto parses “recipes” that describe how to fetch,
@@ -144,16 +144,16 @@ top-level image artifact).</p>
 are prefixed with “<em>meta-“</em>.</p>
 
 <p>There’s a layer dedicated to Raspberry Pi support. Let’s fetch that. Note that
-we’re still in <code>/portable/yocto/dunfell</code> still!</p>
+we’re still in <code>/portable/yocto/kirkstone</code> still!</p>
 
-<pre><code> $ git clone -b dunfell https://github.com/agherzan/meta-raspberrypi.git
+<pre><code> $ git clone -b kirkstone https://github.com/agherzan/meta-raspberrypi.git
 </code></pre>
 
 <p>If you take a look at <code>meta-raspberrypi/README.md</code>, you’ll note that it has
 dependencies on <em>meta-oe</em>, <em>meta-multimedia</em>, <em>meta-networking</em>, and <em>meta-python</em>.
 Fortunately, these are all in one repo:</p>
 
-<pre><code> $ git clone -b dunfell git://git.openembedded.org/meta-openembedded
+<pre><code> $ git clone -b kirkstone git://git.openembedded.org/meta-openembedded
 </code></pre>
 
 <h1 id="enter-your-build-environment">Enter Your Build Environment</h1>
@@ -166,7 +166,7 @@ you.</p>
 will be created and initialized if it doesn’t exist. Lets start a new build
 directory called “rpi”:</p>
 
-<pre><code> $ source /portable/yocto/dunfell/poky/oe-init-build-env /portable/yocto/dunfell/builds/rpi
+<pre><code> $ source /portable/yocto/kirkstone/poky/oe-init-build-env /portable/yocto/kirkstone/builds/rpi
 </code></pre>
 
 <p>You should see some text welcoming you into the environment. You will be placed
@@ -201,11 +201,11 @@ sub-command. Run the command shown below, which has been split onto multiple
 lines here for readability.</p>
 
 <pre><code>$ bitbake-layers add-layer \
-	/portable/yocto/dunfell/meta-openembedded/meta-oe \
- 	/portable/yocto/dunfell/meta-openembedded/meta-multimedia \
- 	/portable/yocto/dunfell/meta-openembedded/meta-networking \
- 	/portable/yocto/dunfell/meta-openembedded/meta-python \
- 	/portable/yocto/dunfell/meta-raspberrypi 
+	/portable/yocto/kirkstone/meta-openembedded/meta-oe \
+ 	/portable/yocto/kirkstone/meta-openembedded/meta-multimedia \
+ 	/portable/yocto/kirkstone/meta-openembedded/meta-networking \
+ 	/portable/yocto/kirkstone/meta-openembedded/meta-python \
+ 	/portable/yocto/kirkstone/meta-raspberrypi 
 </code></pre>
 
 <p>At this point, you might run into a <code>HOSTTOOLS</code> error if some program(s)
@@ -227,14 +227,14 @@ BBPATH = "${TOPDIR}"
 BBFILES ?= ""
 
 BBLAYERS ?= " \
-  /portable/yocto/dunfell/poky/meta \
-  /portable/yocto/dunfell/poky/meta-poky \
-  /portable/yocto/dunfell/poky/meta-yocto-bsp \
-  /portable/yocto/dunfell/meta-openembedded/meta-oe \
-  /portable/yocto/dunfell/meta-openembedded/meta-multimedia \
-  /portable/yocto/dunfell/meta-openembedded/meta-networking \
-  /portable/yocto/dunfell/meta-openembedded/meta-python \
-  /portable/yocto/dunfell/meta-raspberrypi \
+  /portable/yocto/kirkstone/poky/meta \
+  /portable/yocto/kirkstone/poky/meta-poky \
+  /portable/yocto/kirkstone/poky/meta-yocto-bsp \
+  /portable/yocto/kirkstone/meta-openembedded/meta-oe \
+  /portable/yocto/kirkstone/meta-openembedded/meta-multimedia \
+  /portable/yocto/kirkstone/meta-openembedded/meta-networking \
+  /portable/yocto/kirkstone/meta-openembedded/meta-python \
+  /portable/yocto/kirkstone/meta-raspberrypi \
   "
 </code></pre>
 
@@ -264,7 +264,8 @@ operates it in 32-bit mode.</p>
 <p>If you look at the content in these machine configuration files, you’ll find that
 there’s not a whole lot in there. This is because a majority of the “common stuff”
 is all tucked away in files that are included (<em>think #include in C/C++</em>) via the
-<a href="https://www.yoctoproject.org/docs/3.1/bitbake-user-manual/bitbake-user-manual.html#include-directive"><code>include</code></a> and <a href="https://www.yoctoproject.org/docs/3.1/bitbake-user-manual/bitbake-user-manual.html#require-inclusion"><code>require</code></a> directives.</p>
+<a href="https://docs.yoctoproject.org/bitbake/bitbake-user-manual/bitbake-user-manual-metadata.html#include-directive"><code>include</code></a>
+and <a href="https://docs.yoctoproject.org/bitbake/bitbake-user-manual/bitbake-user-manual-metadata.html#require-directive"><code>required</code></a> directives.</p>
 
 <p>Thus, the machine configuration files only override or expand upon variable definitions as-needed to do things like…</p>
 
@@ -288,7 +289,7 @@ This is done by changing the <code>MACHINE</code> definition in <code>local.conf
 <p>Next, change the <code>DL_DIR</code> variable to point to a location where we should
 store downloaded files. I recommend setting this to something like…</p>
 
-<pre><code>DL_DIR = "/portable/yocto/dunfell/downloads"
+<pre><code>DL_DIR = "/portable/yocto/kirkstone/downloads"
 </code></pre>
 
 <p>This variable specifies where we want to store downloaded files. For my own
@@ -299,7 +300,7 @@ to re-download items I already have. This is purely a matter of preference.</p>
 <h2 id="raspberry-pi-specific-configurations">Raspberry Pi-Specific Configurations</h2>
 
 <p>Before we’re done editing the <code>local.conf</code> file, take a quick skim through the
-<code>meta-raspberrypi</code> layer’s <a href="https://git.yoctoproject.org/cgit/cgit.cgi/meta-raspberrypi/tree/docs/extra-build-config.md?h=dunfell"><code>docs/extra-build-config.md</code></a> file.</p>
+<code>meta-raspberrypi</code> layer’s <a href="https://git.yoctoproject.org/cgit/cgit.cgi/meta-raspberrypi/tree/docs/extra-build-config.md"><code>docs/extra-build-config.md</code></a> file.</p>
 
 <p>This describes a variety of <code>local.conf</code> definitions that you can use to
 enable/disable/modify what ultimately gets written to the <code>config.txt</code> file
@@ -315,7 +316,7 @@ project really shines.</p>
 
 <p>If you plan on distributing your custom firmware build setup to other people
 (and especially if you are responsible for maintaining the firmware build process for your
-product), avoid heavy use of local.conf tweaks. Instead use custom <a href="https://docs.yoctoproject.org/3.1.14/overview-manual/overview-manual-concepts.html#distro-layer">distro layers</a>, 
+product), avoid heavy use of local.conf tweaks. Instead use custom <a href="https://docs.yoctoproject.org/overview-manual/concepts.html#distro-layer">distro layers</a>, 
 custom machine configuration files, and  “bbappend” files – we’ll learn about those more a bit later.
 That being said – it’s also neighborly to provide a “known good” local.conf file 
 template when creating your own “distro” layer… especially if you have some
@@ -393,27 +394,27 @@ tmp/deploy/images/raspberrypi3/core-image-minimal-raspberrypi3.wic.bz2
 <ul>
   <li><code>.manifest</code> - Included Recipes</li>
   <li><code>.env</code> - The build environment used during the process</li>
-  <li><code>.testdata.json</code> - <a href="https://docs.yoctoproject.org/3.1.14/dev-manual/dev-manual-common-tasks.html?highlight=testdata#exporting-tests">Test suite</a> metadata</li>
+  <li><code>.testdata.json</code> - <a href="https://docs.yoctoproject.org/dev-manual/common-tasks.html#performing-automated-runtime-testing">Test suite</a> metadata</li>
   <li><code>.ext3</code>, <code>.tar.bz2</code>, <code>.wic.bmap</code> + <code>wic.bz2</code>: Our file system images</li>
 </ul>
 
 <p>In order to define what types of root filesystems image we want – as well ready-to-flash composite images 
-containing a bootloader, kernel, and filesystems – we the <a href="https://docs.yoctoproject.org/3.1.8/singleindex.html#term-IMAGE_FSTYPES">IMAGE_FSTYPES</a>. As you see <a href="https://docs.yoctoproject.org/3.1.8/singleindex.html#term-IMAGE_TYPES">here</a>,
+containing a bootloader, kernel, and filesystems – we the <a href="https://docs.yoctoproject.org/singleindex.html#term-IMAGE_FSTYPES">IMAGE_FSTYPES</a>. As you see <a href="https://docs.yoctoproject.org/singleindex.html#term-IMAGE_TYPES">here</a>,
 there are a lot of available options!</p>
 
 <p>In the case of the <em>meta-raspberrypi</em> layer, an include file that defines various properties about
-our target <code>${MACHINE}</code> (<code>raspberrypi3</code>), contains an “<a href="https://github.com/agherzan/meta-raspberrypi/blob/dunfell/conf/machine/include/rpi-base.inc#L8">early default assignment</a>” (<code>?=</code>) of <code>IMAGE_FSTYPES</code>,
+our target <code>${MACHINE}</code> (<code>raspberrypi3</code>), contains an “<a href="https://github.com/agherzan/meta-raspberrypi/blob/master/conf/machine/include/rpi-base.inc#L8">early default assignment</a>” (<code>?=</code>) of <code>IMAGE_FSTYPES</code>,
 resulting in the items shown above.  Note that you can append to IMAGE_FSTYPES in <code>local.conf</code> if you
 would like to expirament with creating say,</p>
 
-<p>The <code>.wic</code> items may look new to you. These are (multi-partitioned) images creeted by the <a href="https://docs.yoctoproject.org/3.1.8/singleindex.html#creating-partitioned-images-using-wic">Wic tool</a>.</p>
+<p>The <code>.wic</code> items may look new to you. These are (multi-partitioned) images creeted by the <a href="https://docs.yoctoproject.org/singleindex.html#creating-partitioned-images-using-wic">Wic tool</a>.</p>
 
 <h1 id="copy-core-image-minimal-to-an-sd-card">Copy core-image-minimal to an SD card</h1>
 
 <p>Yeah, <code>dd</code> is cool, but have you ever used <a href="https://github.com/intel/bmap-tools">bmaptool</a>? This uses
 the <code>.wic.bmap</code> metadata file to determine where to write blocks of source image data (stored in the corresponding
 <code>.wic.bz2</code> file). This will generally be quicker than <code>dd</code> and friends, as it will skip writes of “empty” regions
-in the source image. You can find some additional information <a href="https://docs.yoctoproject.org/3.1.8/singleindex.html#openembedded-kickstart-wks-reference">here</a>.</p>
+in the source image. You can find some additional information <a href="https://docs.yoctoproject.org/singleindex.html#openembedded-kickstart-wks-reference">here</a>.</p>
 
 <p>Insert an SD card and take note of which block device it is (e.g. <code>/dev/sdX</code>).
 If you have volume automount enabled, be sure to <code>umount</code> any SD card partitions.</p>
@@ -457,7 +458,7 @@ RX:  Pin 10
 <p>Via the UART, you should see boot text and then a login prompt akin to the
 following:</p>
 
-<pre><code> Poky (Yocto Project Reference Distro) 3.1.14 raspberrypi3 /dev/ttyS0
+<pre><code> Poky (Yocto Project Reference Distro) 3.5 raspberrypi3 /dev/ttyS0
 
  raspberrypi3 login: 
 </code></pre>
@@ -506,12 +507,12 @@ layer is the right place to begin introducing those changes.</p>
 
 <p>As a general rule of thumb, you shouldn’t be modifying the contents of other
 layers, provided that they are maintained reasonably well. Even in the cases
-when they aren’t, there are often features (like <a href="https://docs.yoctoproject.org/3.1.14/ref-manual/ref-variables.html?highlight=bbmask#term-BBMASK">BBMASK</a>) that you can use to deal with undesired behavior from
+when they aren’t, there are often features (like <a href="https://docs.yoctoproject.org/ref-manual/variables.html?highlight=bbmask#term-BBMASK">BBMASK</a>) that you can use to deal with undesired behavior from
 other layers, without needing to worry about maintaining a fork of the
 problematic layer.</p>
 
 <p>Let’s start with an overkill, but simple, example just to go through the
-process of <a href="https://docs.yoctoproject.org/3.1.14/dev-manual/dev-manual-common-tasks.html#understanding-and-creating-layers">creating a new layer</a>:</p>
+process of <a href="https://docs.yoctoproject.org/dev-manual/dev-manual-common-tasks.html#understanding-and-creating-layers">creating a new layer</a>:</p>
 
 <p>Let’s say you’ve added some initscripts to an image. After some debugging 
 you’ve realized that BusyBox isn’t configured with a particular command or
@@ -522,9 +523,9 @@ Raspberry Pi and observe that they’re not present on the system. (At the time 
 writing, these file compression Busybox “applets” are not enabled by default.)
 So, we’ll enable these!</p>
 
-<p>Copying entire recipes into your layer is considered a <a href="https://docs.yoctoproject.org/3.1.14/dev-manual/dev-manual-common-tasks.html#following-best-practices-when-creating-layers">poor practice</a>. Instead,
+<p>Copying entire recipes into your layer is considered a <a href="https://docs.yoctoproject.org/dev-manual/common-tasks.html#following-best-practices-when-creating-layers">poor practice</a>. Instead,
 the Yocto and OpenEmbedded communities prefer the use of a
-“<a href="https://docs.yoctoproject.org/3.1.14/dev-manual/dev-manual-common-tasks.html#using-bbappend-files-in-your-layer"><em>bbappend</em></a>”
+“<a href="https://docs.yoctoproject.org/dev-manual/dev-manual-common-tasks.html#using-bbappend-files-in-your-layer"><em>bbappend</em></a>”
 file, which will effectively let you <em>append</em> to the definition of a recipe
 found elsewhere. This allows you modify or redefine variable definitions, as
 well as make changes to the way software is fetched, compiled, “installed”, and
@@ -538,10 +539,10 @@ using that <code>bitbake-layer</code> command we used earlier:</p>
 
 <p>Let’s name our layer “meta-mypi”:</p>
 
-<pre><code>$ bitbake-layers create-layer /portable/yocto/dunfell/meta-mypi
+<pre><code>$ bitbake-layers create-layer /portable/yocto/kirkstone/meta-mypi
 </code></pre>
 
-<p>When done, you should now have a <code>/portable/yocto/dunfell/meta-mypi</code> directory,
+<p>When done, you should now have a <code>/portable/yocto/kirkstone/meta-mypi</code> directory,
 complete with a conf/ directory, an MIT license, a boilerplate README, and
 an example recipe that we won’t concern ourselves with here.</p>
 
@@ -558,16 +559,18 @@ recipe, we can do so by creating a corresponding <code>.bbappend</code> file in 
 matter of best practice, should be located in the same relative path within the
 layer.</p>
 
-<p>The BusyBox recipe is found in <a href="https://git.yoctoproject.org/poky/tree/meta/recipes-core/busybox/busybox_1.31.1.bb?h=dunfell"><code>poky/meta/recipes-core/busybox/busybox_1.31.1.bb</code></a>. 
+<p>The BusyBox recipe is found in <a href="https://git.yoctoproject.org/poky/tree/meta/recipes-core/busybox/busybox_1.35.0.bb"><code>poky/meta/recipes-core/busybox/busybox_1.35.0.bb</code></a>. 
 (The exact version string may have change since this tutorial was last updated.)</p>
 
-<p>Note that this bitbake recipe includes the <a href="https://git.yoctoproject.org/poky/tree/meta/recipes-core/busybox/busybox.inc?h=dunfell"><code>busybox.inc</code></a> file (via the <code>require</code> directive),
+<p>Note that this bitbake recipe includes the <a href="https://git.yoctoproject.org/poky/tree/meta/recipes-core/busybox/busybox.inc"><code>busybox.inc</code></a> file (via the <code>require</code> directive),
 where most of the work of the recipe is actually implemented.</p>
 
-<p>The <a href="https://git.yoctoproject.org/poky/tree/meta/recipes-core/busybox/busybox?h=dunfell"><code>poky/meta/recipes-core/busybox/busybox</code></a> 
-directory contains patches, “configuration fragments”, while <a href="https://git.yoctoproject.org/cgit/cgit.cgi/poky/tree/meta/recipes-core/busybox/files?h=zeus"><code>poky/meta/recipes-core/busybox/files</code></a> contains items to deploy within the target filesystem image. You’ll see these referenced via “file://” in the recipe’s <a href="https://www.yoctoproject.org/docs/3.1/mega-manual/mega-manual.html#var-SRC_URI"><code>SRC_URI</code></a> definition.</p>
+<p>The <a href="https://git.yoctoproject.org/poky/tree/meta/recipes-core/busybox/busybox"><code>poky/meta/recipes-core/busybox/busybox</code></a> 
+directory contains patches, “configuration fragments”, while <a href="https://git.yoctoproject.org/poky/tree/meta/recipes-core/busybox/files"><code>poky/meta/recipes-core/busybox/files</code></a>
+contains items to deploy within the target filesystem image. You’ll see these referenced 
+via “file://” in the recipe’s <a href="https://docs.yoctoproject.org/singleindex.html"><code>SRC_URI</code></a> definition.</p>
 
-<p>The term “<a href="https://docs.yoctoproject.org/3.1.14/kernel-dev/kernel-dev-common.html#creating-configuration-fragments">configuration fragments</a>”
+<p>The term “<a href="https://docs.yoctoproject.org/kernel-dev/kernel-dev-common.html#creating-configuration-fragments">configuration fragments</a>”
 is most often used with respect to Linux kernel configuration, but applies to
 the KConfig-esque configuration of BusyBox as well. Basically, these are <code>.cfg</code>
 files that contain just a handful of <code>CONFIG_FEATURE_&lt;X&gt;=y</code> entries. For recipes
@@ -596,7 +599,7 @@ Busybox binary we’ve already built.</p>
 
 <ol>
   <li>
-    <p>Inspect the <a href="https://git.yoctoproject.org/cgit/cgit.cgi/poky/tree/meta/recipes-core/busybox/busybox/defconfig?h=dunfell"><code>poky/meta/recipes-core/busybox/busybox/defconfig</code></a>file, which gets combined with configuration fragments at build time.</p>
+    <p>Inspect the <a href="https://git.yoctoproject.org/cgit/cgit.cgi/poky/tree/meta/recipes-core/busybox/busybox/defconfig"><code>poky/meta/recipes-core/busybox/busybox/defconfig</code></a> file, which gets combined with configuration fragments at build time.</p>
   </li>
   <li>
     <p>Look at the actual <code>.config</code> file that was used to configure the build that has already happened.</p>
@@ -626,15 +629,15 @@ commands.</p>
 in the <code>poky/meta</code> directory tree. Then, create a configuration fragment file in it that specifies
 that we want <code>CONFIG_XZ=y</code> and <code>CONFIG_UNXZ=y</code>.</p>
 
-<pre><code>$ mkdir -p /portable/yocto/dunfell/meta-mypi/recipes-core/busybox/busybox
-$ echo "CONFIG_XZ=y"    &gt; /portable/yocto/dunfell/meta-mypi/recipes-core/busybox/busybox/xz.cfg
-$ echo "CONFIG_UNXZ=y" &gt;&gt; /portable/yocto/dunfell/meta-mypi/recipes-core/busybox/busybox/xz.cfg
+<pre><code>$ mkdir -p /portable/yocto/kirkstone/meta-mypi/recipes-core/busybox/busybox
+$ echo "CONFIG_XZ=y"    &gt; /portable/yocto/kirkstone/meta-mypi/recipes-core/busybox/busybox/xz.cfg
+$ echo "CONFIG_UNXZ=y" &gt;&gt; /portable/yocto/kirkstone/meta-mypi/recipes-core/busybox/busybox/xz.cfg
 </code></pre>
 
 <p>Next, lets create our actual bbappend file. Create the following file, again adjusting
 slightly if the busybox version has changed since the time of writing.</p>
 
-<pre><code>/portable/yocto/dunfell/meta-mypi/recipes-core/busybox/busybox_1.31.1.bbappend
+<pre><code>/portable/yocto/kirkstone/meta-mypi/recipes-core/busybox/busybox_.bbappend
 </code></pre>
 
 <p>You only need to put two lines in this file. Ensure you include the leading
@@ -644,13 +647,13 @@ whitespace in the string on the second line.</p>
 SRC_URI_append := " file://xz.cfg"
 </code></pre>
 
-<p>By setting the <a href="https://docs.yoctoproject.org/3.1.14/singleindex.html#term-FILESEXTRAPATHS"><code>FILESEXTRAPATHS</code></a> variable, we’re instructing the OpenEmbedded build 
-system to look inside the directory in which our bbappend file resides (<a href="https://docs.yoctoproject.org/3.1.14/singleindex.html#term-THISDIR"><code>THISDIR</code></a>), 
-in a a subdirectory with the same name as our recipe, busybox. (See: <a href="https://docs.yoctoproject.org/3.1.14/singleindex.html#term-PN"><code>PN</code></a>)</p>
+<p>By setting the <a href="https://docs.yoctoproject.org/singleindex.html#term-FILESEXTRAPATHS"><code>FILESEXTRAPATHS</code></a> variable, we’re instructing the OpenEmbedded build 
+system to look inside the directory in which our bbappend file resides (<a href="https://docs.yoctoproject.org/singleindex.html#term-THISDIR"><code>THISDIR</code></a>), 
+in a a subdirectory with the same name as our recipe, busybox. (See: <a href="https://docs.yoctoproject.org/singleindex.html#term-PN"><code>PN</code></a>)</p>
 
 <p>That’s it, as far as the <em>bbappend</em> goes. The last thing to do is enable our new layer, since we haven’t done that yet.</p>
 
-<p>One final note - it would be incredibly annoying if you had to create a new bbappend file for every patch version bump to a piece of software. As noted <a href="https://docs.yoctoproject.org/bitbake/bitbake-user-manual/bitbake-user-manual-intro.html#append-files">here</a>, you can actually use a “%” wildcard in the version portion of a recipe filename to match multiple version. We could have named our file, <code>busybox_1.31.%.bbappend</code>, for example, to match all versions in the 1.31.x series.</p>
+<p>One final note - it would be incredibly annoying if you had to create a new bbappend file for every patch version bump to a piece of software. As noted <a href="https://docs.yoctoproject.org/bitbake/bitbake-user-manual/bitbake-user-manual-intro.html#append-files">here</a>, you can actually use a “%” wildcard in the version portion of a recipe filename to match multiple version. We could have named our file, <code>busybox_1.31.%.bbappend</code>, for example, to match all versions in the 1.35.x series.</p>
 
 <h2 id="enable-our-layer">Enable our layer</h2>
 
