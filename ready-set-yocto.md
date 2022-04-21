@@ -45,7 +45,7 @@ of interest to you once you start to get your bearings. I hope to update this
 for the Zeus (or a later) release in the near future, so feedback on that is
 always welcome.
 
-[Improving Your Embedded Linux Security Posture with Yocto]
+[Improving Your Embedded Linux Security Posture with Yocto] ([archive.org mirror])
 
 ## Don't Panic! ##
 
@@ -67,7 +67,9 @@ comparisons of all three projects [here](https://www.yoctoproject.org/learn-item
 
 [OpenEmbedded]: https://www.openembedded.org/wiki/Main_Page
 
-[Improving Your Embedded Linux Security Posture with Yocto]: https://www.nccgroup.trust/us/our-research/improving-your-embedded-linux-security-posture-with-yocto/
+[Improving Your Embedded Linux Security Posture with Yocto]: https://www.nccgroup.com/globalassets/our-research/us/whitepapers/2018/improving-embedded-linux-security-yocto3.pdf
+
+[archive.org mirror]: https://web.archive.org/web/20220122003633/https://www.nccgroup.com/globalassets/our-research/us/whitepapers/2018/improving-embedded-linux-security-yocto3.pdf
 
 
 # Build Environment #
